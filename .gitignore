@@ -1,0 +1,7 @@
+/bin
+/pkg
+/vendor/src
+/tmp
+/settings
+/.build.txt
+/db/dbconf.yml
