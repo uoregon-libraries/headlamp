@@ -2,10 +2,29 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/Nerdmaster/magicsql",
+			"repository": "https://github.com/Nerdmaster/magicsql",
+			"revision": "f6449635e469a7a5e072c87d973eefee7e8b615e",
+			"branch": "HEAD"
+		},
+		{
+			"importpath": "github.com/mattn/go-sqlite3",
+			"repository": "https://github.com/mattn/go-sqlite3",
+			"revision": "5160b48509cf5c877bc22c11c373f8c7738cdb38",
+			"branch": "HEAD"
+		},
+		{
 			"importpath": "github.com/uoregon-libraries/gopkg",
 			"repository": "https://github.com/uoregon-libraries/gopkg",
 			"revision": "a69074f9fc37ae8a84da9b39f338c072a8de042a",
 			"branch": "master"
+		},
+		{
+			"importpath": "golang.org/x/net/context",
+			"repository": "https://go.googlesource.com/net",
+			"revision": "a337091b0525af65de94df2eb7e98bd9962dcbe2",
+			"branch": "master",
+			"path": "/context"
 		}
 	]
 }

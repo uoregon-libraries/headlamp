@@ -41,17 +41,12 @@ func main() {
 		usage(fmt.Sprintf("%q is not a valid path", daPath))
 	}
 
-	var c = startInventoryReader(daPath)
+	var c = newCacher(daPath)
+	go c.start()
 
 	catchInterrupts(func() {
 		c.stop()
 	})
 
 	c.wait()
-}
-
-func startInventoryReader(daPath string) *cacher {
-	var c = newCacher(daPath)
-	c.start()
-	return c
 }
