@@ -1,4 +1,4 @@
-.PHONY: all validate build lint format clean
+.PHONY: all validate build lint format test clean
 
 all: vendor/src validate build
 
@@ -16,6 +16,9 @@ lint:
 
 format:
 	find src/ -name "*.go" | xargs gofmt -l -w -s
+
+test:
+	go test ./src/...
 
 clean:
 	rm -rf bin/ pkg/
