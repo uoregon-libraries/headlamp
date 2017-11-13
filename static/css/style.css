@@ -1,0 +1,57 @@
+body {
+  padding-bottom: 70px;
+}
+
+.title-with-errors {
+  background: #FEE;
+}
+.title-with-errors .title-link {
+  float: left;
+  width: 200px;
+}
+
+.issue-error-list {
+  background: #FEE;
+  font-weight: bold;
+}
+
+.issue-error-list ul li {
+  font-weight: normal;
+}
+
+.issue-new {
+  font-style: italic;
+}
+
+/* Make bootstrap's contrast problems slightly better */
+.alert-warning  { color: #3E2100; }
+.alert-danger   { color: #4d0200; }
+.alert-success  { color: #103210; }
+.alert-info     { color: #002443; }
+caption         { color: #333; }
+
+/* Make all non-nav <a> tags underlined */
+a     { text-decoration: underline; }
+nav a { text-decoration: none; }
+
+form.actions {
+  display: inline-block;
+}
+
+.osd-container {
+  border: 1px solid black;
+  padding: 8px;
+}
+
+.osd-toolbar {
+  width: 400px;
+  height: 35px;
+}
+
+.dl-horizontal dt {
+  width: 200px;
+}
+
+.dl-horizontal dd {
+  margin-left: 220px;
+}
