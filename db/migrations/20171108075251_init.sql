@@ -18,16 +18,20 @@ CREATE INDEX inventories_project_id ON inventories (project_id);
 CREATE TABLE folders (
   id integer not null primary key,
   project_id integer not null,
+  folder_id integer not null,
+  name text not null,
   path text not null
 );
 
 CREATE INDEX folders_path ON folders (path);
+CREATE INDEX folders_folder_id ON folders (folder_id);
 CREATE UNIQUE INDEX folders_unique ON folders (project_id, path);
 
 CREATE TABLE files (
   id integer not null primary key,
   project_id integer not null,
   inventory_id integer not null,
+  folder_id integer not null,
   archive_date date not null,
 
   -- Relative path to the file, relative to project/date/
@@ -38,11 +42,13 @@ CREATE TABLE files (
 
 CREATE INDEX files_path ON files (path);
 CREATE INDEX files_project_id ON files (project_id);
+CREATE INDEX files_folder_id ON files (folder_id);
 CREATE INDEX files_inventory_id ON files (inventory_id);
 CREATE UNIQUE INDEX files_unique ON files (project_id, archive_date, path);
 
 -- +goose Down
 -- SQL section 'Down' is executed when this migration is rolled back
 DROP TABLE files;
+DROP TABLE folders;
 DROP TABLE inventories;
 DROP TABLE projects;

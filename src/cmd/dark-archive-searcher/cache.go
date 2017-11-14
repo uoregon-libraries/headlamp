@@ -110,7 +110,6 @@ func (c *cacher) refreshData(op *db.Operation, fullRebuild bool) {
 			logger.Criticalf("Unable to store project %q: %s", pName, err)
 			return
 		}
-		var seenFolders = make(map[string]bool)
 
 		for _, csvFilename := range csvFiles {
 			var indexed, err = project.HasIndexedInventoryFile(csvFilename)
@@ -146,32 +145,42 @@ func (c *cacher) refreshData(op *db.Operation, fullRebuild bool) {
 				continue
 			}
 			for i, record := range bytes.Split(data, []byte("\n")) {
-				var f = buildFile(op, inventory, i, record)
-				if f == nil {
+				// Get the details of the record, skipping if it's invalid
+				var fr = parseRecord(inventory.Filename, i, record)
+				if fr == emptyFR {
 					continue
 				}
 
+				// Build folder structure for easier lookups
+				var folders = strings.Split(fr.filename, string(os.PathSeparator))
+				folders = folders[:len(folders)-1]
+				var fullPath string
+				var parentFolder *db.Folder
+				for _, fName := range folders {
+					fullPath = filepath.Join(fullPath, fName)
+					parentFolder, err = db.FindOrCreateFolder(project, parentFolder, fullPath)
+					if err != nil {
+						logger.Criticalf("Database error trying to build folder %q: %s", fullPath, err)
+						return
+					}
+				}
+
+				var f = buildFile(inventory, parentFolder, fr)
+				var indexed, err = project.HasIndexedFile(f)
+				if err != nil {
+					logger.Criticalf("Unable to look for file %q in project %q: %s", f, pName, err)
+					return
+				}
+				if indexed {
+					logger.Errorf("Invalid record (inventory %q, record #%d): another record "+
+						"with the same project id (%d), archive date (%q), and path (%q) exists",
+						inventory.Filename, i, project.ID, f.ArchiveDate, f.Path)
+					continue
+				}
 				op.Files.Save(f)
 				if op.Operation.Err() != nil {
 					logger.Criticalf("Database error trying to store file (%#v): %s", f, op.Operation.Err())
 					return
-				}
-
-				// Build folder structure for easier lookups
-				var folders = strings.Split(f.Path, string(os.PathSeparator))
-				folders = folders[:len(folders)-1]
-
-				var fullPath string
-				for _, fName := range folders {
-					fullPath = filepath.Join(fullPath, fName)
-					if !seenFolders[fullPath] {
-						seenFolders[fullPath] = true
-						var err = project.CreateFolder(fullPath)
-						if err != nil {
-							logger.Criticalf("Database error trying to build folder %q: %s", fullPath, err)
-							return
-						}
-					}
 				}
 			}
 		}
@@ -180,12 +189,21 @@ func (c *cacher) refreshData(op *db.Operation, fullRebuild bool) {
 	logger.Infof("Inventory refreshed")
 }
 
-// buildFile parses the record's data, logging invalid records, and returning a
-// File if all is well, or nil if not
-func buildFile(op *db.Operation, i *db.Inventory, index int, record []byte) *db.File {
+type fileRecord struct {
+	checksum    string
+	filesize    int64
+	archiveDate time.Time
+	filename    string
+}
+
+var emptyFR fileRecord
+
+// parseRecord converts a slice of bytes (presumably from a CSV file) into our
+// internal fileRecord structure for use when creating files and folders
+func parseRecord(inventoryFile string, recordNum int, record []byte) fileRecord {
 	// Skip the trailing newline (or any blank line, really)
 	if len(record) == 0 {
-		return nil
+		return emptyFR
 	}
 
 	// We sometimes have filenames with commas, but the sha and filesize are
@@ -193,15 +211,19 @@ func buildFile(op *db.Operation, i *db.Inventory, index int, record []byte) *db.
 	var recParts = bytes.SplitN(record, []byte(","), 3)
 
 	// Skip headers
-	if index == 0 && bytes.Equal(recParts[0], []byte("sha256sum")) {
-		return nil
+	if recordNum == 0 && bytes.Equal(recParts[0], []byte("sha256sum")) {
+		return emptyFR
 	}
 
 	// These helpers make handling errors and warnings a bit easier
 	var logString = func(msg string, args ...interface{}) string {
-		return fmt.Sprintf("Invalid record (inventory %q, record #%d): ", i.Filename, index) + fmt.Sprintf(msg, args...)
+		var prefix = fmt.Sprintf("Invalid record (inventory %q, record #%d): ", inventoryFile, recordNum)
+		return prefix + fmt.Sprintf(msg, args...)
 	}
-	var Errorf = func(msg string, args ...interface{}) *db.File { logger.Errorf(logString(msg, args...)); return nil }
+	var Errorf = func(msg string, args ...interface{}) fileRecord {
+		logger.Errorf(logString(msg, args...))
+		return emptyFR
+	}
 	var Warnf = func(msg string, args ...interface{}) { logger.Warnf(logString(msg, args...)) }
 
 	// We should always have exactly 3 records
@@ -229,25 +251,28 @@ func buildFile(op *db.Operation, i *db.Inventory, index int, record []byte) *db.
 		return Errorf("top-level directory %q must be formatted as a date (YYYY-MM-DD)", dateDir)
 	}
 
-	// Check on an existing file so we can abort without a database-level error
-	var f = new(db.File)
-	var sel = op.Files.Select()
-	sel = sel.Where("project_id = ? AND archive_date = ? AND path = ?", i.Project.ID, dt, relPath)
-	var ok = sel.First(f)
-	if ok {
-		return Errorf("duplicate file in the database (dbid %d)", f.ID)
-	}
-
-	// We have no errors in the name, so now we can actualy hit the database
 	var checksum = string(recParts[0])
+	return fileRecord{checksum: checksum, filesize: filesize, archiveDate: dt, filename: relPath}
+}
+
+// buildFile cobbles together the inventory, folder, and record data to return
+// a ready-to-save db.File
+func buildFile(i *db.Inventory, folder *db.Folder, record fileRecord) *db.File {
+	var f = folder
+	var fid = 0
+	if f != nil {
+		fid = f.ID
+	}
 	return &db.File{
 		Project:     i.Project,
 		ProjectID:   i.Project.ID,
 		Inventory:   i,
 		InventoryID: i.ID,
-		ArchiveDate: dt,
-		Checksum:    checksum,
-		Filesize:    filesize,
-		Path:        relPath,
+		Folder:      f,
+		FolderID:    fid,
+		ArchiveDate: record.archiveDate,
+		Checksum:    record.checksum,
+		Filesize:    record.filesize,
+		Path:        record.filename,
 	}
 }

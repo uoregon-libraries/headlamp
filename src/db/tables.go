@@ -1,6 +1,9 @@
 package db
 
 import (
+	"fmt"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -22,13 +25,15 @@ type Inventory struct {
 }
 
 // Folder maps to the folders table, and is effectively a giant folder list for
-// a project to allow easier refining of searches.  If the dark archive gets
-// huge, this won't be efficient, as we really just use it to know which "LIKE"
-// queries to fire off.
+// a project to allow easier refining of searches
 type Folder struct {
-	ID        int `sql:",primary"`
+	ID        int      `sql:",primary"`
+	Project   *Project `sql:"-"`
+	Folder    *Folder  `sql:"-"`
 	ProjectID int
+	FolderID  int
 	Path      string
+	Name      string
 }
 
 // File maps to the files database table, which represents the actual archived
@@ -37,8 +42,10 @@ type File struct {
 	ID          int        `sql:",primary"`
 	Project     *Project   `sql:"-"`
 	Inventory   *Inventory `sql:"-"`
+	Folder      *Folder    `sql:"-"`
 	ProjectID   int
 	InventoryID int
+	FolderID    int
 	ArchiveDate time.Time
 	Checksum    string
 	Filesize    int64
@@ -53,11 +60,43 @@ func (p *Project) HasIndexedInventoryFile(filename string) (bool, error) {
 	return indexed, p.database.Operation.Err()
 }
 
-// CreateFolder adds a folder under the project
-func (p *Project) CreateFolder(path string) error {
-	p.database.Folders.Save(&Folder{
+// HasIndexedFile returns true if the given file is already in the database.
+// Database-level errors are passed up to the caller.
+func (p *Project) HasIndexedFile(f *File) (bool, error) {
+	var dummy File
+	var sel = p.database.Files.Select()
+	sel = sel.Where("project_id = ? AND archive_date = ? AND path = ?", p.ID, f.ArchiveDate, f.Path)
+	return sel.First(&dummy), p.database.Operation.Err()
+}
+
+// FindOrCreateFolder centralizes the creation and DB-save operation for folders
+func FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
+	var parts = strings.Split(path, string(os.PathSeparator))
+	var parentFolderID = 0
+	if f != nil {
+		parentFolderID = f.ID
+	}
+	var newFolder Folder
+	var sel = p.database.Folders.Select()
+	sel = sel.Where("project_id = ? AND path = ?", p.ID, path)
+	var ok = sel.First(&newFolder)
+	if ok {
+		if newFolder.FolderID != parentFolderID {
+			return nil, fmt.Errorf("existing record with different parent found")
+		}
+		newFolder.Folder = f
+		newFolder.Project = p
+		return &newFolder, nil
+	}
+
+	newFolder = Folder{
+		Folder:    f,
+		FolderID:  parentFolderID,
+		Project:   p,
 		ProjectID: p.ID,
 		Path:      path,
-	})
-	return p.database.Operation.Err()
+		Name:      parts[len(parts)-1],
+	}
+	p.database.Folders.Save(&newFolder)
+	return &newFolder, p.database.Operation.Err()
 }
