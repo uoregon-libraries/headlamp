@@ -26,10 +26,11 @@ func newCacher(daPath string) *cacher {
 	return &cacher{daPath: daPath, needStop: make(chan bool, 1), sigDone: make(chan bool, 1)}
 }
 
-// start kicks off the ticker, refreshing the dark archive inventory list daily
+// start kicks off the ticker, refreshing the dark archive inventory list regularly
 func (c *cacher) start() {
+	c.ticker = time.NewTicker(time.Hour)
 	c.RefreshData()
-	c.ticker = time.NewTicker(time.Hour * 24)
+
 	select {
 	case <-c.ticker.C:
 		c.RefreshData()
