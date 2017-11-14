@@ -21,6 +21,16 @@ type Inventory struct {
 	Filename  string
 }
 
+// Folder maps to the folders table, and is effectively a giant folder list for
+// a project to allow easier refining of searches.  If the dark archive gets
+// huge, this won't be efficient, as we really just use it to know which "LIKE"
+// queries to fire off.
+type Folder struct {
+	ID        int `sql:",primary"`
+	ProjectID int
+	Path      string
+}
+
 // File maps to the files database table, which represents the actual archived
 // files described by the inventory CSV files
 type File struct {
@@ -41,4 +51,13 @@ func (p *Project) HasIndexedInventoryFile(filename string) (bool, error) {
 	var inventory = new(Inventory)
 	var indexed = p.database.Inventories.Select().Where("filename = ?", filename).First(inventory)
 	return indexed, p.database.Operation.Err()
+}
+
+// CreateFolder adds a folder under the project
+func (p *Project) CreateFolder(path string) error {
+	p.database.Folders.Save(&Folder{
+		ProjectID: p.ID,
+		Path:      path,
+	})
+	return p.database.Operation.Err()
 }

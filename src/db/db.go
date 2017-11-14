@@ -13,6 +13,7 @@ import (
 var dbh *magicsql.DB
 var dbhMutex sync.Mutex
 var mtFiles = magicsql.Table("files", &File{})
+var mtFolders = magicsql.Table("folders", &Folder{})
 var mtProjects = magicsql.Table("projects", &Project{})
 var mtInventories = magicsql.Table("inventories", &Inventory{})
 
@@ -21,6 +22,7 @@ type Database struct {
 	sync.Mutex
 	Operation   *magicsql.Operation
 	Files       *magicsql.OperationTable
+	Folders     *magicsql.OperationTable
 	Inventories *magicsql.OperationTable
 	Projects    *magicsql.OperationTable
 }
@@ -59,6 +61,7 @@ func (db *Database) InTransaction(cb func(*Operation)) error {
 	}
 	db.Operation = dbh.Operation()
 	db.Files = db.Operation.OperationTable(mtFiles)
+	db.Folders = db.Operation.OperationTable(mtFolders)
 	db.Inventories = db.Operation.OperationTable(mtInventories)
 	db.Projects = db.Operation.OperationTable(mtProjects)
 
@@ -75,6 +78,7 @@ func (db *Database) InTransaction(cb func(*Operation)) error {
 // prepare for a fresh data load
 func (op *Operation) DeleteAll() error {
 	op.Operation.Exec("DELETE FROM files")
+	op.Operation.Exec("DELETE FROM folders")
 	op.Operation.Exec("DELETE FROM inventories")
 	op.Operation.Exec("DELETE FROM projects")
 	return op.Operation.Err()

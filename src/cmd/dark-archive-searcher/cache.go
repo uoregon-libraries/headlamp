@@ -109,6 +109,7 @@ func (c *cacher) refreshData(op *db.Operation, fullRebuild bool) {
 			logger.Criticalf("Unable to store project %q: %s", pName, err)
 			return
 		}
+		var seenFolders = make(map[string]bool)
 
 		for _, csvFilename := range csvFiles {
 			var indexed, err = project.HasIndexedInventoryFile(csvFilename)
@@ -153,6 +154,23 @@ func (c *cacher) refreshData(op *db.Operation, fullRebuild bool) {
 				if op.Operation.Err() != nil {
 					logger.Criticalf("Database error trying to store file (%#v): %s", f, op.Operation.Err())
 					return
+				}
+
+				// Build folder structure for easier lookups
+				var folders = strings.Split(f.Path, string(os.PathSeparator))
+				folders = folders[:len(folders)-1]
+
+				var fullPath string
+				for _, fName := range folders {
+					fullPath = filepath.Join(fullPath, fName)
+					if !seenFolders[fullPath] {
+						seenFolders[fullPath] = true
+						var err = project.CreateFolder(fullPath)
+						if err != nil {
+							logger.Criticalf("Database error trying to build folder %q: %s", fullPath, err)
+							return
+						}
+					}
 				}
 			}
 		}

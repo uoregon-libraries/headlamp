@@ -15,6 +15,15 @@ CREATE TABLE inventories (
 
 CREATE INDEX inventories_project_id ON inventories (project_id);
 
+CREATE TABLE folders (
+  id integer not null primary key,
+  project_id integer not null,
+  path text not null
+);
+
+CREATE INDEX folders_path ON folders (path);
+CREATE UNIQUE INDEX folders_unique ON folders (project_id, path);
+
 CREATE TABLE files (
   id integer not null primary key,
   project_id integer not null,
