@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 )
 
-// Project maps to the projects database table, which represents a top-level
-// dark-archive directory
+// Project maps to the projects database table, which represents a "magic"
+// dark-archive directory we expose as if it's a top-level directory for
+// browsing files
 type Project struct {
 	database *Database
 	ID       int `sql:",primary"`
@@ -16,12 +16,10 @@ type Project struct {
 }
 
 // Inventory maps to the inventories database table, which represents a
-// CSV file in a project's INVENTORY folder
+// manifest file in an INVENTORY folder
 type Inventory struct {
-	ID        int      `sql:",primary"`
-	Project   *Project `sql:"-"`
-	ProjectID int
-	Filename  string
+	ID   int    `sql:",primary"`
+	Path string // Path is relative to the dark archive root
 }
 
 // Folder maps to the folders table, and is effectively a giant folder list for
@@ -37,7 +35,7 @@ type Folder struct {
 }
 
 // File maps to the files database table, which represents the actual archived
-// files described by the inventory CSV files
+// files described by the inventory files
 type File struct {
 	ID          int        `sql:",primary"`
 	Project     *Project   `sql:"-"`
@@ -46,10 +44,10 @@ type File struct {
 	ProjectID   int
 	InventoryID int
 	FolderID    int
-	ArchiveDate time.Time
 	Checksum    string
 	Filesize    int64
-	Path        string
+	FullPath    string
+	PublicPath  string
 }
 
 // HasIndexedInventoryFile returns true if this project has already seen the given

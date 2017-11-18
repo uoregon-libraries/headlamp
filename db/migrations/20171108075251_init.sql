@@ -9,8 +9,7 @@ CREATE INDEX projects_name ON projects (name);
 
 CREATE TABLE inventories (
   id integer not null primary key,
-  project_id integer not null,
-  filename text not null
+  path text not null
 );
 
 CREATE INDEX inventories_project_id ON inventories (project_id);
@@ -32,12 +31,18 @@ CREATE TABLE files (
   project_id integer not null,
   inventory_id integer not null,
   folder_id integer not null,
-  archive_date date not null,
 
-  -- Relative path to the file, relative to project/date/
+  -- Data integrity info
   checksum text not null,
   filesize integer not null,
-  path text not null
+
+  -- This is the full path (relative to the dark archive root)
+  full_path text not null
+
+  -- This is the "public" path we expose to users for searching; it collapses
+  -- things like project directory, volume directories, archive date
+  -- directories, etc.
+  public_path text not null
 );
 
 CREATE INDEX files_path ON files (path);
