@@ -40,13 +40,4 @@ func main() {
 	if !fileutil.IsDir(daPath) {
 		usage(fmt.Sprintf("%q is not a valid path", daPath))
 	}
-
-	var c = newCacher(daPath)
-	go c.start()
-
-	catchInterrupts(func() {
-		c.stop()
-	})
-
-	c.wait()
 }
