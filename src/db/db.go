@@ -3,6 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/Nerdmaster/magicsql"
@@ -71,7 +73,10 @@ func (db *Database) InTransaction(cb func(*Operation)) error {
 
 	var err = db.Operation.Err()
 	db.Operation = nil
-	return err
+	if err != nil {
+		return fmt.Errorf("database error: %s", err)
+	}
+	return nil
 }
 
 // DeleteAll destroys all files and projects from the database in order to
@@ -82,6 +87,28 @@ func (op *Operation) DeleteAll() error {
 	op.Operation.Exec("DELETE FROM inventories")
 	op.Operation.Exec("DELETE FROM projects")
 	return op.Operation.Err()
+}
+
+// AllInventories returns all the inventory files which have been indexed
+func (op *Operation) AllInventories() ([]*Inventory, error) {
+	var inventories []*Inventory
+	op.Inventories.Select().AllObjects(&inventories)
+	return inventories, op.Operation.Err()
+}
+
+// WriteInventory stores the given inventory object in the database
+func (op *Operation) WriteInventory(i *Inventory) error {
+	op.Inventories.Save(i)
+	return op.Operation.Err()
+}
+
+// HasIndexedFile returns true if the given file is already in the database.
+// Database-level errors are passed up to the caller.
+func (op *Operation) HasIndexedFile(f *File) (bool, error) {
+	var dummy File
+	var sel = op.Files.Select()
+	sel = sel.Where("full_path = ?", f.FullPath)
+	return sel.First(&dummy), op.Operation.Err()
 }
 
 // FindOrCreateProject stores (or finds) the project by the given name and
@@ -95,4 +122,36 @@ func (op *Operation) FindOrCreateProject(name string) (*Project, error) {
 		op.Projects.Save(project)
 	}
 	return project, op.Operation.Err()
+}
+
+// FindOrCreateFolder centralizes the creation and DB-save operation for folders
+func FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
+	var parts = strings.Split(path, string(os.PathSeparator))
+	var parentFolderID = 0
+	if f != nil {
+		parentFolderID = f.ID
+	}
+	var newFolder Folder
+	var sel = p.database.Folders.Select()
+	sel = sel.Where("project_id = ? AND path = ?", p.ID, path)
+	var ok = sel.First(&newFolder)
+	if ok {
+		if newFolder.FolderID != parentFolderID {
+			return nil, fmt.Errorf("existing record with different parent found")
+		}
+		newFolder.Folder = f
+		newFolder.Project = p
+		return &newFolder, nil
+	}
+
+	newFolder = Folder{
+		Folder:    f,
+		FolderID:  parentFolderID,
+		Project:   p,
+		ProjectID: p.ID,
+		Path:      path,
+		Name:      parts[len(parts)-1],
+	}
+	p.database.Folders.Save(&newFolder)
+	return &newFolder, p.database.Operation.Err()
 }

@@ -18,16 +18,17 @@ type Inventory struct {
 	Path string // Path is relative to the dark archive root
 }
 
-// Folder maps to the folders table, and is effectively a giant folder list for
-// a project to allow easier refining of searches
+// Folder maps to the folders table, and is effectively a giant list of our
+// collapsed folder structure for a project to allow easier browsing and/or
+// refining of searches
 type Folder struct {
 	ID        int      `sql:",primary"`
 	Project   *Project `sql:"-"`
 	Folder    *Folder  `sql:"-"`
 	ProjectID int
 	FolderID  int
-	Path      string
 	Name      string
+	Path      string
 }
 
 // File maps to the files database table, which represents the actual archived
@@ -43,6 +44,7 @@ type File struct {
 	ArchiveDate time.Time
 	Checksum    string
 	Filesize    int64
+	Name        string
 	FullPath    string
 	PublicPath  string
 }
