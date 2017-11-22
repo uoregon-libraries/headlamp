@@ -12,6 +12,12 @@ CREATE TABLE inventories (
   path text not null
 );
 
+-- Folders are a convenience concept that don't map to the filesystem directly.
+-- A file is always within a project's structure somewhere, has an archive-date
+-- folder, and can have any number of "ignored" / collapsed folders in the
+-- tree.  The "folders" table just indexes all the non-collapsed folders a file
+-- has in its path so we can present users with a fake filesystem that's
+-- hopefully easier to handle.
 CREATE TABLE folders (
   id integer not null primary key,
   project_id integer not null,
