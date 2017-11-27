@@ -107,7 +107,7 @@ func (op *Operation) WriteInventory(i *Inventory) error {
 func (op *Operation) HasIndexedFile(f *File) (bool, error) {
 	var dummy File
 	var sel = op.Files.Select()
-	sel = sel.Where("full_path = ?", f.FullPath)
+	sel = sel.Where("project_id = ? AND full_path = ?", f.ProjectID, f.FullPath)
 	return sel.First(&dummy), op.Operation.Err()
 }
 
