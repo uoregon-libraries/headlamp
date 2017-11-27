@@ -75,13 +75,17 @@ func (i *Indexer) findNewInventoryFiles() ([]string, error) {
 	// Find all inventory files on the filesystem, and return the list of those
 	// which have never been seen
 	var allFiles []string
-	logger.Debugf("Searching for files matching %q", i.c.InventoryPattern)
+	logger.Debugf("Searching for files matching %q (skipping manifest.csv)", i.c.InventoryPattern)
 	allFiles, err = filepath.Glob(filepath.Join(i.c.DARoot, i.c.InventoryPattern))
 	if err != nil {
 		return nil, err
 	}
 	var newFiles []string
 	for _, fname := range allFiles {
+		if strings.HasSuffix(fname, "manifest.csv") {
+			logger.Debugf("Skipping manifest file (%q)", fname)
+			continue
+		}
 		if !seenFile[fname] {
 			newFiles = append(newFiles, fname)
 		}

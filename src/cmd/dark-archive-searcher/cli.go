@@ -62,7 +62,9 @@ func usage(msg string) {
 		the path of the inventory file, removing the filename, adding "../" and the
 		filename.  e.g., project/date/INVENTORY/foo.csv might describe
 		"bar/baz.tiff", which could be found at
-		project/date/INVENTORY/../bar/baz.tiff, or project/date/bar/baz.tiff.
+		project/date/INVENTORY/../bar/baz.tiff, or project/date/bar/baz.tiff.  Note
+		that "manifest.csv" is automatically skipped as those files are always our
+		composite inventories.
 	`)
 	perr("")
 	perr("Example:")
