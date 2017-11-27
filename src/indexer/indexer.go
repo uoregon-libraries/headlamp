@@ -15,16 +15,30 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
+// project wraps db.Project, extending it with a cache of the top- and
+// second-level folders so we avoid the majority of DB hits without holding
+// onto absurd quantites of data in cases where the folder structure is
+// unusually deep
+type project struct {
+	*db.Project
+
+	folders map[string]*db.Folder
+}
+
 // Indexer controls how we find inventory files, which part(s) of the path are
 // skipped, and which part of the path defines a project name.
 type Indexer struct {
 	op *db.Operation
 	c  *Config
+
+	// projects keeps a cache of all projects, keyed by the name, to avoid
+	// millions of unnecessary lookups in the db
+	projects map[string]*project
 }
 
 // New sets up a scanner for use in indexing dark-archive file data
 func New(op *db.Operation, conf *Config) *Indexer {
-	return &Indexer{op: op, c: conf}
+	return &Indexer{op: op, c: conf, projects: make(map[string]*project)}
 }
 
 // Index searches for inventory files not previously seen and indexes the files
@@ -100,13 +114,15 @@ func (i *Indexer) indexInventoryFile(fname string) error {
 	var relativePath = strings.TrimLeft(strings.Replace(fname, i.c.DARoot, "", 1), "/")
 
 	logger.Debugf("Indexing inventory file %q as %q", fname, relativePath)
-	i.op.WriteInventory(&db.Inventory{Path: relativePath})
+	var inventory = &db.Inventory{Path: relativePath}
+	i.op.WriteInventory(inventory)
 	var records = bytes.Split(data, []byte("\n"))
 	for index, record := range records {
 		var fr = i.parseFileRecord(relativePath, index, record)
 		if fr == emptyFR {
 			continue
 		}
+		i.storeFile(index, inventory, fr)
 	}
 
 	return i.op.Operation.Err()
