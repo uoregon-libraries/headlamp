@@ -79,6 +79,7 @@ func (i *Indexer) findNewInventoryFiles() ([]string, error) {
 type fileRecord struct {
 	checksum    string
 	filesize    int64
+	projectName string
 	archiveDate string
 	fullPath    string
 	publicPath  string
@@ -163,10 +164,13 @@ func (i *Indexer) parseFileRecord(inventoryFile string, index int, record []byte
 	var publicPath string
 	pathParts, publicPath = pathParts[:partCount-1], pathParts[partCount-1]
 
-	// Of the magic folders, only the date is needed here
-	var dateDir string
+	// Pull the date and project name from the collapsed path elements
+	var projectName, dateDir string
 	for index, part := range pathParts {
-		if i.c.PathFormat[index] == Date {
+		switch i.c.PathFormat[index] {
+		case Project:
+			projectName = part
+		case Date:
 			dateDir = part
 		}
 	}
@@ -181,6 +185,7 @@ func (i *Indexer) parseFileRecord(inventoryFile string, index int, record []byte
 	var checksum = string(recParts[0])
 	return fileRecord{checksum: checksum,
 		filesize:    filesize,
+		projectName: projectName,
 		archiveDate: dateDir,
 		fullPath:    fullPath,
 		publicPath:  publicPath,
