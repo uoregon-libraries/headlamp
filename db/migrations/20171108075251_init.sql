@@ -40,7 +40,7 @@ CREATE TABLE files (
   project_id integer not null,
   inventory_id integer not null,
   folder_id integer not null,
-  archive_date datetime not null,
+  archive_date text not null,
 
   -- Data integrity info
   checksum text not null,

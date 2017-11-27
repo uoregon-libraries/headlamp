@@ -1,7 +1,5 @@
 package db
 
-import "time"
-
 // Project maps to the projects database table, which represents a "magic"
 // dark-archive directory we expose as if it's a top-level directory for
 // browsing files
@@ -41,7 +39,7 @@ type File struct {
 	ProjectID   int
 	InventoryID int
 	FolderID    int
-	ArchiveDate time.Time
+	ArchiveDate string
 	Checksum    string
 	Filesize    int64
 	Name        string
