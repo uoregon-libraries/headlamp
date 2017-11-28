@@ -89,21 +89,6 @@ func (i *Indexer) storeFile(index int, inventory *db.Inventory, fr fileRecord) e
 	}
 
 	var f = prj.buildFile(inventory, parentFolder, fr)
-	var indexed bool
-	indexed, err = i.op.HasIndexedFile(f)
-	if err != nil {
-		return fmt.Errorf("couldn't look for file %q in project %q: %s", f, prj.Name, err)
-	}
-
-	// If it's already been indexed, we log an error but don't return an error,
-	// as we still want to try and process everything else
-	if indexed {
-		logger.Errorf("Invalid record (inventory %q, record #%d): another record "+
-			"with the same project id (%d) and full path (%q) exists",
-			inventory.Path, index, prj.ID, f.FullPath)
-		return nil
-	}
-
 	i.op.Files.Save(f)
 	if i.op.Operation.Err() != nil {
 		return fmt.Errorf("couldn't store file %#v: %s", f, i.op.Operation.Err())

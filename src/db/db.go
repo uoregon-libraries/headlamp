@@ -102,15 +102,6 @@ func (op *Operation) WriteInventory(i *Inventory) error {
 	return op.Operation.Err()
 }
 
-// HasIndexedFile returns true if the given file is already in the database.
-// Database-level errors are passed up to the caller.
-func (op *Operation) HasIndexedFile(f *File) (bool, error) {
-	var dummy File
-	var sel = op.Files.Select()
-	sel = sel.Where("project_id = ? AND full_path = ?", f.ProjectID, f.FullPath)
-	return sel.First(&dummy), op.Operation.Err()
-}
-
 // FindOrCreateProject stores (or finds) the project by the given name and
 // returns it.  If there are any database errors, they're returned and Project
 // will be undefined.
