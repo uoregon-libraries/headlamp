@@ -69,13 +69,15 @@ func (db *Database) InTransaction(cb func(*Operation) error) error {
 
 	db.Operation.BeginTransaction()
 	var err = cb(&Operation{db})
+
 	// Make sure we absolutely rollback if an error is returned
 	if err != nil {
 		db.Operation.Rollback()
+		db.Operation = nil
 		return err
 	}
-	db.Operation.EndTransaction()
 
+	db.Operation.EndTransaction()
 	err = db.Operation.Err()
 	db.Operation = nil
 	if err != nil {
