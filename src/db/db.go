@@ -54,7 +54,7 @@ func New() *Database {
 // InTransaction connects to the database and starts a transaction, used by all
 // other Database calls, runs the callback function, then ends the transaction,
 // returning the error (if any occurs)
-func (db *Database) InTransaction(cb func(*Operation)) error {
+func (db *Database) InTransaction(cb func(*Operation) error) error {
 	db.Lock()
 	defer db.Unlock()
 
@@ -68,10 +68,15 @@ func (db *Database) InTransaction(cb func(*Operation)) error {
 	db.Projects = db.Operation.OperationTable(mtProjects)
 
 	db.Operation.BeginTransaction()
-	cb(&Operation{db})
+	var err = cb(&Operation{db})
+	// Make sure we absolutely rollback if an error is returned
+	if err != nil {
+		db.Operation.Rollback()
+		return err
+	}
 	db.Operation.EndTransaction()
 
-	var err = db.Operation.Err()
+	err = db.Operation.Err()
 	db.Operation = nil
 	if err != nil {
 		return fmt.Errorf("database error: %s", err)
