@@ -161,13 +161,14 @@ var emptyFR fileRecord
 // indexInventoryFile stores the given inventory file in the database and then
 // crawls through its contents to index the described archive files
 func (i *indexerOperation) indexInventoryFile(fname string) error {
+	var relativePath = strings.TrimLeft(strings.Replace(fname, i.c.DARoot, "", 1), "/")
+	logger.Debugf("Indexing inventory file %q as %q", fname, relativePath)
+
 	var data, err = ioutil.ReadFile(fname)
 	if err != nil {
 		return fmt.Errorf("unable to read inventory file %q: %s", fname, err)
 	}
 
-	var relativePath = strings.TrimLeft(strings.Replace(fname, i.c.DARoot, "", 1), "/")
-	logger.Debugf("Indexing inventory file %q as %q", fname, relativePath)
 	var inventory = &db.Inventory{Path: relativePath}
 	i.op.WriteInventory(inventory)
 	var records = bytes.Split(data, []byte("\n"))
