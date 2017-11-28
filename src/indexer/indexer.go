@@ -36,6 +36,10 @@ type Indexer struct {
 	// projects keeps a cache of all projects, keyed by the name, to avoid
 	// millions of unnecessary lookups in the db
 	projects map[string]*project
+
+	// seenInventoryFiles caches the files we've processed in the past so we
+	// don't hit the DB each time we're looking at a new inventory file
+	seenInventoryFiles map[string]bool
 }
 
 // indexerOperation wraps an Indexer with a single operation's context so we
@@ -54,18 +58,25 @@ func New(dbh *db.Database, conf *Config) *Indexer {
 // Index searches for inventory files not previously seen and indexes the files
 // described therein
 func (i *Indexer) Index() error {
-	var newFiles []string
-	var err = i.dbh.InTransaction(func(op *db.Operation) error {
-		var err2 error
+	var files, err = i.findInventoryFiles()
+	if err != nil {
+		return err
+	}
+
+	err = i.dbh.InTransaction(func(op *db.Operation) error {
 		var iop = &indexerOperation{i, op}
-		newFiles, err2 = iop.findNewInventoryFiles()
-		return err2
+		return iop.findAlreadyIndexedInventoryFiles()
 	})
 	if err != nil {
 		return err
 	}
 
-	for _, fname := range newFiles {
+	for _, fname := range files {
+		if i.seenInventoryFile(fname) {
+			logger.Debugf("Skipping %q; already indexed this file", fname)
+			continue
+		}
+
 		err = i.dbh.InTransaction(func(op *db.Operation) error {
 			var iop = &indexerOperation{i, op}
 			return iop.indexInventoryFile(fname)
@@ -78,39 +89,43 @@ func (i *Indexer) Index() error {
 	return nil
 }
 
-// findNewInventoryFiles gathers a list of files matching the Indexer's
-// InventoryPattern which haven't already been indexed
-func (i *indexerOperation) findNewInventoryFiles() ([]string, error) {
-	// Make note of all inventory files we've already processed
-	var allInventories, err = i.op.AllInventories()
-	if err != nil {
-		return nil, err
-	}
-	var seenFile = make(map[string]bool)
-	for _, inv := range allInventories {
-		seenFile[inv.Path] = true
-	}
-
-	// Find all inventory files on the filesystem, and return the list of those
-	// which have never been seen
-	var allFiles []string
+// findInventoryFiles gathers a list of files matching the Indexer's InventoryPattern
+func (i *Indexer) findInventoryFiles() ([]string, error) {
 	logger.Debugf("Searching for files matching %q (skipping manifest.csv)", i.c.InventoryPattern)
-	allFiles, err = filepath.Glob(filepath.Join(i.c.DARoot, i.c.InventoryPattern))
+	var allFiles, err = filepath.Glob(filepath.Join(i.c.DARoot, i.c.InventoryPattern))
 	if err != nil {
 		return nil, err
 	}
-	var newFiles []string
+	var files []string
 	for _, fname := range allFiles {
 		if strings.HasSuffix(fname, "manifest.csv") {
 			logger.Debugf("Skipping manifest file (%q)", fname)
 			continue
 		}
-		if !seenFile[fname] {
-			newFiles = append(newFiles, fname)
-		}
+		files = append(files, fname)
 	}
 
-	return newFiles, nil
+	return files, nil
+}
+
+// findAlreadyIndexedInventoryFiles caches the list of inventory files already processed
+func (i *indexerOperation) findAlreadyIndexedInventoryFiles() error {
+	var allInventories, err = i.op.AllInventories()
+
+	i.Lock()
+	defer i.Unlock()
+	i.seenInventoryFiles = make(map[string]bool)
+	for _, inv := range allInventories {
+		// The database indexes everything relative to the dark archive so that the
+		// mount point doesn't have to be immutable.  Pretty great, right?  But
+		// that means we have to prepend the current root here....
+		i.seenInventoryFiles[filepath.Join(i.c.DARoot, inv.Path)] = true
+	}
+	return err
+}
+
+func (i *Indexer) seenInventoryFile(fname string) bool {
+	return i.seenInventoryFiles[fname]
 }
 
 type fileRecord struct {
@@ -132,10 +147,7 @@ func (i *indexerOperation) indexInventoryFile(fname string) error {
 		return fmt.Errorf("unable to read inventory file %q: %s", fname, err)
 	}
 
-	// We know the inventory file is legit, so we store it in the database, then
-	// process its contents
 	var relativePath = strings.TrimLeft(strings.Replace(fname, i.c.DARoot, "", 1), "/")
-
 	logger.Debugf("Indexing inventory file %q as %q", fname, relativePath)
 	var inventory = &db.Inventory{Path: relativePath}
 	i.op.WriteInventory(inventory)
