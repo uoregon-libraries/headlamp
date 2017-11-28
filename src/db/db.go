@@ -79,16 +79,6 @@ func (db *Database) InTransaction(cb func(*Operation)) error {
 	return nil
 }
 
-// DeleteAll destroys all files and projects from the database in order to
-// prepare for a fresh data load
-func (op *Operation) DeleteAll() error {
-	op.Operation.Exec("DELETE FROM files")
-	op.Operation.Exec("DELETE FROM folders")
-	op.Operation.Exec("DELETE FROM inventories")
-	op.Operation.Exec("DELETE FROM projects")
-	return op.Operation.Err()
-}
-
 // AllInventories returns all the inventory files which have been indexed
 func (op *Operation) AllInventories() ([]*Inventory, error) {
 	var inventories []*Inventory
