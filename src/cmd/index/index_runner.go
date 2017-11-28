@@ -25,13 +25,15 @@ func (r *runner) start() {
 	}
 	reindex()
 
-	select {
-	case <-r.ticker.C:
-		reindex()
-	case <-r.needStop:
-		r.ticker.Stop()
-		r.sigDone <- true
-		return
+	for {
+		select {
+		case <-r.ticker.C:
+			reindex()
+		case <-r.needStop:
+			r.ticker.Stop()
+			r.sigDone <- true
+			return
+		}
 	}
 }
 
