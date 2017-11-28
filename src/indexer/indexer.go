@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -40,6 +41,10 @@ type Indexer struct {
 	// seenInventoryFiles caches the files we've processed in the past so we
 	// don't hit the DB each time we're looking at a new inventory file
 	seenInventoryFiles map[string]bool
+
+	// stopped is set to true externally via Stop(), signalling the script to
+	// exit when it can do so without losing data
+	stopped int32
 }
 
 // indexerOperation wraps an Indexer with a single operation's context so we
@@ -84,9 +89,23 @@ func (i *Indexer) Index() error {
 		if err != nil {
 			logger.Errorf("Error processing %q: %s", fname, err)
 		}
+
+		if i.isStopped() {
+			return nil
+		}
 	}
 
 	return nil
+}
+
+// Stop tells the indexer to stop running Index() when it can do so without
+// data loss (in between inventory files)
+func (i *Indexer) Stop() {
+	atomic.StoreInt32(&i.stopped, 1)
+}
+
+func (i *Indexer) isStopped() bool {
+	return atomic.LoadInt32(&i.stopped) == 1
 }
 
 // findInventoryFiles gathers a list of files matching the Indexer's InventoryPattern

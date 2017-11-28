@@ -17,6 +17,7 @@ func main() {
 
 	go runner.start()
 	catchInterrupts(func() {
+		i.Stop()
 		runner.stop()
 	})
 
