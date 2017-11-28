@@ -6,12 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-func (i *Indexer) findOrCreateProject(pName string) (*project, error) {
+func (i *indexerOperation) findOrCreateProject(pName string) (*project, error) {
 	// Get or create the project
+	i.Lock()
+	defer i.Unlock()
+
 	if i.projects[pName] == nil {
 		var p, err = i.op.FindOrCreateProject(pName)
 		if err != nil {
@@ -72,7 +73,7 @@ func (p *project) buildFile(i *db.Inventory, f *db.Folder, r fileRecord) *db.Fil
 	}
 }
 
-func (i *Indexer) storeFile(index int, inventory *db.Inventory, fr fileRecord) error {
+func (i *indexerOperation) storeFile(index int, inventory *db.Inventory, fr fileRecord) error {
 	var prj, err = i.findOrCreateProject(fr.projectName)
 	if err != nil {
 		return err

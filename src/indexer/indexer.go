@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -28,31 +29,49 @@ type project struct {
 // Indexer controls how we find inventory files, which part(s) of the path are
 // skipped, and which part of the path defines a project name.
 type Indexer struct {
-	op *db.Operation
-	c  *Config
+	sync.Mutex
+	dbh *db.Database
+	c   *Config
 
 	// projects keeps a cache of all projects, keyed by the name, to avoid
 	// millions of unnecessary lookups in the db
 	projects map[string]*project
 }
 
+// indexerOperation wraps an Indexer with a single operation's context so we
+// can separate the overall Indexer setup / config from a single transactioned
+// indexing job
+type indexerOperation struct {
+	*Indexer
+	op *db.Operation
+}
+
 // New sets up a scanner for use in indexing dark-archive file data
-func New(op *db.Operation, conf *Config) *Indexer {
-	return &Indexer{op: op, c: conf, projects: make(map[string]*project)}
+func New(dbh *db.Database, conf *Config) *Indexer {
+	return &Indexer{dbh: dbh, c: conf, projects: make(map[string]*project)}
 }
 
 // Index searches for inventory files not previously seen and indexes the files
 // described therein
 func (i *Indexer) Index() error {
-	var newFiles, err = i.findNewInventoryFiles()
+	var newFiles []string
+	var err = i.dbh.InTransaction(func(op *db.Operation) error {
+		var err2 error
+		var iop = &indexerOperation{i, op}
+		newFiles, err2 = iop.findNewInventoryFiles()
+		return err2
+	})
 	if err != nil {
 		return err
 	}
 
 	for _, fname := range newFiles {
-		err = i.indexInventoryFile(fname)
+		err = i.dbh.InTransaction(func(op *db.Operation) error {
+			var iop = &indexerOperation{i, op}
+			return iop.indexInventoryFile(fname)
+		})
 		if err != nil {
-			return err
+			logger.Errorf("Error processing %q: %s", fname, err)
 		}
 	}
 
@@ -61,7 +80,7 @@ func (i *Indexer) Index() error {
 
 // findNewInventoryFiles gathers a list of files matching the Indexer's
 // InventoryPattern which haven't already been indexed
-func (i *Indexer) findNewInventoryFiles() ([]string, error) {
+func (i *indexerOperation) findNewInventoryFiles() ([]string, error) {
 	// Make note of all inventory files we've already processed
 	var allInventories, err = i.op.AllInventories()
 	if err != nil {
@@ -107,7 +126,7 @@ var emptyFR fileRecord
 
 // indexInventoryFile stores the given inventory file in the database and then
 // crawls through its contents to index the described archive files
-func (i *Indexer) indexInventoryFile(fname string) error {
+func (i *indexerOperation) indexInventoryFile(fname string) error {
 	var data, err = ioutil.ReadFile(fname)
 	if err != nil {
 		return fmt.Errorf("unable to read inventory file %q: %s", fname, err)
