@@ -78,13 +78,21 @@ func getCLI() *indexer.Config {
 	if len(os.Args) < 4 {
 		usage("You must specify all arguments")
 	}
-	if len(os.Args) > 4 {
+	if len(os.Args) > 5 {
 		usage("Too many arguments")
 	}
 
 	c.DARoot = parseDARoot(os.Args[1])
 	c.PathFormat = parsePathFormat(os.Args[2])
 	c.InventoryPattern = parseInventoryPattern(os.Args[3])
+
+	if len(os.Args) == 5 {
+		if os.Args[4] == "--debug" {
+			c.Debug = true
+		} else {
+			usage(fmt.Sprintf("Unknown argument %q", os.Args[4]))
+		}
+	}
 
 	return c
 }

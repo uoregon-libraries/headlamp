@@ -16,4 +16,5 @@ type Config struct {
 	DARoot           string      // Root path to the dark archive
 	PathFormat       []PathToken // e.g., "project/ignore/date" would be [Project, Ignored, Date]
 	InventoryPattern string      // e.g., "*/INVENTORY/*.csv" would find stuff in [anything]/INVENTORY/[anything].csv
+	Debug            bool
 }

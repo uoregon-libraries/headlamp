@@ -11,6 +11,7 @@ func main() {
 	var config = getCLI()
 	var dbh = db.New()
 	var err = dbh.InTransaction(func(op *db.Operation) {
+		op.Operation.Dbg = config.Debug
 		var i = indexer.New(op, config)
 		i.Index()
 	})
