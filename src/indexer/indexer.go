@@ -27,6 +27,13 @@ type project struct {
 	folders map[string]*db.Folder
 }
 
+// States an indexer can be in
+const (
+	iStateStopped int32 = iota
+	iStateRunning
+	iStateStopping
+)
+
 // Indexer controls how we find inventory files, which part(s) of the path are
 // skipped, and which part of the path defines a project name.
 type Indexer struct {
@@ -42,9 +49,11 @@ type Indexer struct {
 	// don't hit the DB each time we're looking at a new inventory file
 	seenInventoryFiles map[string]bool
 
-	// stopped is set to true externally via Stop(), signalling the script to
-	// exit when it can do so without losing data
-	stopped int32
+	// state is set via async calls to tell us what the indexer is currently
+	// doing (if anything).  This allows running an indexing operation in the
+	// background and waiting for it to finish while also being able to request
+	// it to stop at the next opportunity.
+	state int32
 }
 
 // indexerOperation wraps an Indexer with a single operation's context so we
@@ -63,6 +72,9 @@ func New(dbh *db.Database, conf *Config) *Indexer {
 // Index searches for inventory files not previously seen and indexes the files
 // described therein
 func (i *Indexer) Index() error {
+	i.setState(iStateRunning)
+	defer i.setState(iStateStopped)
+
 	var files, err = i.findInventoryFiles()
 	if err != nil {
 		return err
@@ -90,7 +102,7 @@ func (i *Indexer) Index() error {
 			logger.Errorf("Error processing %q: %s", fname, err)
 		}
 
-		if i.isStopped() {
+		if i.getState() == iStateStopping {
 			return nil
 		}
 	}
@@ -101,11 +113,29 @@ func (i *Indexer) Index() error {
 // Stop tells the indexer to stop running Index() when it can do so without
 // data loss (in between inventory files)
 func (i *Indexer) Stop() {
-	atomic.StoreInt32(&i.stopped, 1)
+	var cur = i.getState()
+	if cur != iStateStopped && cur != iStateStopping {
+		i.setState(iStateStopping)
+	}
 }
 
-func (i *Indexer) isStopped() bool {
-	return atomic.LoadInt32(&i.stopped) == 1
+// Wait returns after indexing is complete.  This will return immediately if no
+// indexing operation is currently happening.
+func (i *Indexer) Wait() {
+	for {
+		if i.getState() == iStateStopped {
+			return
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+func (i *Indexer) getState() int32 {
+	return atomic.LoadInt32(&i.state)
+}
+
+func (i *Indexer) setState(state int32) {
+	atomic.StoreInt32(&i.state, state)
 }
 
 // findInventoryFiles gathers a list of files matching the Indexer's InventoryPattern

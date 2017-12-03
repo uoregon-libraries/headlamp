@@ -15,11 +15,8 @@ func main() {
 		sigDone:  make(chan bool, 1),
 	}
 
-	go runner.start()
 	catchInterrupts(func() {
-		i.Stop()
 		runner.stop()
 	})
-
-	runner.wait()
+	runner.run()
 }
