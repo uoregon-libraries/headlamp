@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 	"github.com/uoregon-libraries/gopkg/tmpl"
@@ -11,8 +12,8 @@ import (
 var root *tmpl.TRoot
 var home, empty *tmpl.Template
 
-func initTemplates(baseURL string) {
-	webutil.Webroot = baseURL
+func initTemplates(baseURL *url.URL) {
+	webutil.Webroot = baseURL.Path
 	root = tmpl.Root("layout", "templates/")
 	root.Funcs(tmpl.DefaultTemplateFunctions)
 	root.Funcs(webutil.FuncMap)

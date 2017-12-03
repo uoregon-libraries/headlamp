@@ -45,7 +45,7 @@ func startServer(baseURL, bind string) *http.Server {
 	var staticPrefix = basePath + "/static/"
 	mux.Handle(staticPrefix, http.StripPrefix(staticPrefix, fileServer))
 
-	initTemplates(baseURL)
+	initTemplates(u)
 	var server = &http.Server{Addr: bind, Handler: mux}
 
 	go func() {
