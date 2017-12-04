@@ -8,7 +8,7 @@ TODO: form
 
 <div class="row projects">
 {{range .Projects}}
-  <div class="col-md-4 project">{{.Name}}</div>
+  <div class="col-md-4 project"><a href="{{BrowseProjectPath .ID}}">{{.Name}}</a></div>
 {{end}}
 </div>
 

@@ -17,6 +17,7 @@ func initTemplates(webroot string) {
 	root = tmpl.Root("layout", "templates/")
 	root.Funcs(tmpl.DefaultTemplateFunctions)
 	root.Funcs(webutil.FuncMap)
+	root.Funcs(localTemplateFuncs)
 	root.MustReadPartials("layout.go.html")
 	home = root.Clone().MustBuild("home.go.html")
 	empty = root.Template()
