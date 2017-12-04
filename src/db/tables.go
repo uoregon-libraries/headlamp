@@ -4,9 +4,9 @@ package db
 // dark-archive directory we expose as if it's a top-level directory for
 // browsing files
 type Project struct {
-	database *Database
-	ID       int `sql:",primary"`
-	Name     string
+	op   *Operation
+	ID   int `sql:",primary"`
+	Name string
 }
 
 // Inventory maps to the inventories database table, which represents a
