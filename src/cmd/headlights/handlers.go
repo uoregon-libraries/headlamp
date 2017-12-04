@@ -1,6 +1,7 @@
 package main
 
 import (
+	"db"
 	"net/http"
 	"net/url"
 
@@ -22,7 +23,20 @@ func initTemplates(baseURL *url.URL) {
 	empty = root.Template()
 }
 
-type vars map[string]string
+type vars map[string]interface{}
+
+func _500(w http.ResponseWriter, msg string) {
+	w.WriteHeader(http.StatusInternalServerError)
+	empty.Execute(w, vars{"Title": "Error", "Alert": msg})
+}
+
+func getProjects() (projects []*db.Project, err error) {
+	err = dbh.InTransaction(func(op *db.Operation) error {
+		projects, err = op.AllProjects()
+		return err
+	})
+	return projects, err
+}
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.String() != "/" {
@@ -30,7 +44,15 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		empty.Execute(w, vars{"Title": "Error", "Alert": "Unable to find the requested resource"})
 		return
 	}
-	var err = home.Execute(w, vars{"Title": "Search - Headlights"})
+
+	var projects, err = getProjects()
+	if err != nil {
+		logger.Errorf("Unable to find projects: %s", err)
+		_500(w, "Error trying to find project list.  Try again or contact support.")
+		return
+	}
+
+	err = home.Execute(w, vars{"Title": "Headlights", "Projects": projects})
 	if err != nil {
 		logger.Errorf("Unable to render home template: %s", err)
 	}

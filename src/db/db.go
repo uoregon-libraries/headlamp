@@ -89,6 +89,13 @@ func (op *Operation) WriteInventory(i *Inventory) error {
 	return op.Operation.Err()
 }
 
+// AllProjects returns all projects which have been seen
+func (op *Operation) AllProjects() ([]*Project, error) {
+	var projects []*Project
+	op.Projects.Select().AllObjects(&projects)
+	return projects, op.Operation.Err()
+}
+
 // FindOrCreateProject stores (or finds) the project by the given name and
 // returns it.  If there are any database errors, they're returned and Project
 // will be undefined.
