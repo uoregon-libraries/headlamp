@@ -72,6 +72,11 @@ func New(dbh *db.Database, conf *Config) *Indexer {
 // Index searches for inventory files not previously seen and indexes the files
 // described therein
 func (i *Indexer) Index() error {
+	// It's not an error if we're already running, but we don't want to start again
+	if i.getState() == iStateRunning {
+		return nil
+	}
+
 	i.setState(iStateRunning)
 	defer i.setState(iStateStopped)
 
