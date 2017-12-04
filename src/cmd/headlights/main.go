@@ -40,9 +40,6 @@ func startServer(baseURL, bind string) *http.Server {
 	}
 
 	var basePath = strings.TrimRight(u.Path, "/")
-	if basePath == "" {
-		basePath = "/"
-	}
 	mux.HandleFunc(basePath+"/", homeHandler)
 
 	var staticPath = filepath.Join(filepath.Dir(os.Args[2]), "static")
@@ -50,6 +47,9 @@ func startServer(baseURL, bind string) *http.Server {
 	var staticPrefix = basePath + "/static/"
 	mux.Handle(staticPrefix, http.StripPrefix(staticPrefix, fileServer))
 
+	if basePath == "" {
+		basePath = "/"
+	}
 	initTemplates(basePath)
 	var server = &http.Server{Addr: bind, Handler: mux}
 
