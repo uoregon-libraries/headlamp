@@ -92,7 +92,7 @@ func (op *Operation) WriteInventory(i *Inventory) error {
 // AllProjects returns all projects which have been seen
 func (op *Operation) AllProjects() ([]*Project, error) {
 	var projects []*Project
-	op.Projects.Select().AllObjects(&projects)
+	op.Projects.Select().Order("LOWER(name)").AllObjects(&projects)
 	return projects, op.Operation.Err()
 }
 
