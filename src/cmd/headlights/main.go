@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/uoregon-libraries/gopkg/interrupts"
@@ -38,7 +39,10 @@ func startServer(baseURL, bind string) *http.Server {
 		logger.Fatalf("Unable to parse base URL %q: %s", baseURL, err)
 	}
 
-	var basePath = u.Path
+	var basePath = strings.TrimRight(u.Path, "/")
+	if basePath == "" {
+		basePath = "/"
+	}
 	mux.HandleFunc(basePath+"/", homeHandler)
 
 	var staticPath = filepath.Join(filepath.Dir(os.Args[2]), "static")
@@ -46,7 +50,7 @@ func startServer(baseURL, bind string) *http.Server {
 	var staticPrefix = basePath + "/static/"
 	mux.Handle(staticPrefix, http.StripPrefix(staticPrefix, fileServer))
 
-	initTemplates(u)
+	initTemplates(basePath)
 	var server = &http.Server{Addr: bind, Handler: mux}
 
 	go func() {
