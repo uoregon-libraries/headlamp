@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
@@ -19,7 +20,7 @@ func main() {
 	var baseURL, bind = getCLI()
 
 	var s = startServer(baseURL, bind)
-	catchInterrupts(func() {
+	interrupts.TrapIntTerm(func() {
 		var ctx, cancel = context.WithDeadline(context.Background(), time.Now().Add(time.Minute))
 		defer cancel()
 		s.Shutdown(ctx)

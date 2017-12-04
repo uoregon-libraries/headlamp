@@ -3,6 +3,8 @@ package main
 import (
 	"db"
 	"indexer"
+
+	"github.com/uoregon-libraries/gopkg/interrupts"
 )
 
 func main() {
@@ -15,7 +17,7 @@ func main() {
 		sigDone:  make(chan bool, 1),
 	}
 
-	catchInterrupts(func() {
+	interrupts.TrapIntTerm(func() {
 		runner.stop()
 	})
 	runner.run()
