@@ -4,7 +4,6 @@ package db
 // dark-archive directory we expose as if it's a top-level directory for
 // browsing files
 type Project struct {
-	op   *Operation
 	ID   int `sql:",primary"`
 	Name string
 }

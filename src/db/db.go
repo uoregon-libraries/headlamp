@@ -46,19 +46,23 @@ func New() *Database {
 	}
 }
 
-// InTransaction connects to the database and starts a transaction, used by all
-// other Database calls, runs the callback function, then ends the transaction,
-// returning the error (if any occurs)
-func (db *Database) InTransaction(cb func(*Operation) error) error {
+// Operation returns a pre-set Operation for quick tasks that don't warrant a transaction
+func (db *Database) Operation() *Operation {
 	var magicOp = db.dbh.Operation()
-	var op = &Operation{
+	return &Operation{
 		Operation:   magicOp,
 		Files:       magicOp.OperationTable(db.mtFiles),
 		Folders:     magicOp.OperationTable(db.mtFolders),
 		Inventories: magicOp.OperationTable(db.mtInventories),
 		Projects:    magicOp.OperationTable(db.mtProjects),
 	}
+}
 
+// InTransaction connects to the database and starts a transaction, used by all
+// other Database calls, runs the callback function, then ends the transaction,
+// returning the error (if any occurs)
+func (db *Database) InTransaction(cb func(*Operation) error) error {
+	var op = db.Operation()
 	op.Operation.BeginTransaction()
 	var err = cb(op)
 
@@ -96,28 +100,38 @@ func (op *Operation) AllProjects() ([]*Project, error) {
 	return projects, op.Operation.Err()
 }
 
+// FindProjectByName returns a project if one exists with the given name, and
+// the database error if any occurred
+func (op *Operation) FindProjectByName(name string) (*Project, error) {
+	var project = &Project{}
+	var ok = op.Projects.Select().Where("name = ?", name).First(project)
+	if !ok {
+		project = nil
+	}
+	return project, op.Operation.Err()
+}
+
 // FindOrCreateProject stores (or finds) the project by the given name and
 // returns it.  If there are any database errors, they're returned and Project
 // will be undefined.
 func (op *Operation) FindOrCreateProject(name string) (*Project, error) {
-	var project = &Project{op: op}
-	var ok = op.Projects.Select().Where("name = ?", name).First(project)
-	if !ok {
-		project.Name = name
+	var project, err = op.FindProjectByName(name)
+	if project == nil && err == nil {
+		project = &Project{Name: name}
 		op.Projects.Save(project)
 	}
 	return project, op.Operation.Err()
 }
 
 // FindOrCreateFolder centralizes the creation and DB-save operation for folders
-func FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
+func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
 	var parts = strings.Split(path, string(os.PathSeparator))
 	var parentFolderID = 0
 	if f != nil {
 		parentFolderID = f.ID
 	}
 	var newFolder Folder
-	var sel = p.op.Folders.Select()
+	var sel = op.Folders.Select()
 	sel = sel.Where("project_id = ? AND path = ?", p.ID, path)
 	var ok = sel.First(&newFolder)
 	if ok {
@@ -137,6 +151,6 @@ func FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
 		Path:      path,
 		Name:      parts[len(parts)-1],
 	}
-	p.op.Folders.Save(&newFolder)
-	return &newFolder, p.op.Operation.Err()
+	op.Folders.Save(&newFolder)
+	return &newFolder, op.Operation.Err()
 }

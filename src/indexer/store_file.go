@@ -29,7 +29,7 @@ func (i *indexerOperation) findOrCreateProject(pName string) (*project, error) {
 // returned, aborting whatever folders were still needing to be built, if any.
 //
 // The first two levels of folders are cached for reuse.
-func (p *project) processFolderPaths(folders []string) (*db.Folder, error) {
+func (i *indexerOperation) processFolderPaths(p *project, folders []string) (*db.Folder, error) {
 	var fullPath string
 	var parentFolder *db.Folder
 
@@ -38,7 +38,7 @@ func (p *project) processFolderPaths(folders []string) (*db.Folder, error) {
 		parentFolder = p.folders[fullPath]
 		if parentFolder == nil {
 			var err error
-			parentFolder, err = db.FindOrCreateFolder(p.Project, parentFolder, fullPath)
+			parentFolder, err = i.op.FindOrCreateFolder(p.Project, parentFolder, fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't build folder %q: %s", fullPath, err)
 			}
@@ -83,7 +83,7 @@ func (i *indexerOperation) storeFile(index int, inventory *db.Inventory, fr file
 	var pathCount = len(pathParts)
 	var parentFolder *db.Folder
 	if pathCount > 1 {
-		parentFolder, err = prj.processFolderPaths(pathParts[:pathCount-1])
+		parentFolder, err = i.processFolderPaths(prj, pathParts[:pathCount-1])
 		if err != nil {
 			return err
 		}
