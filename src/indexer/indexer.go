@@ -77,6 +77,9 @@ func (i *Indexer) Index() error {
 		return nil
 	}
 
+	logger.Infof("Starting indexer.Index()")
+	defer logger.Infof("indexer.Index() complete")
+
 	i.setState(iStateRunning)
 	defer i.setState(iStateStopped)
 
