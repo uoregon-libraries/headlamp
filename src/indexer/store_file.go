@@ -31,21 +31,22 @@ func (i *indexerOperation) findOrCreateProject(pName string) (*project, error) {
 // The first two levels of folders are cached for reuse.
 func (i *indexerOperation) processFolderPaths(p *project, folders []string) (*db.Folder, error) {
 	var fullPath string
-	var parentFolder *db.Folder
+	var folder, parentFolder *db.Folder
 
 	for level, fName := range folders {
 		fullPath = filepath.Join(fullPath, fName)
-		parentFolder = p.folders[fullPath]
-		if parentFolder == nil {
+		folder = p.folders[fullPath]
+		if folder == nil {
 			var err error
-			parentFolder, err = i.op.FindOrCreateFolder(p.Project, parentFolder, fullPath)
+			folder, err = i.op.FindOrCreateFolder(p.Project, parentFolder, fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't build folder %q: %s", fullPath, err)
 			}
 			if level <= 2 {
-				p.folders[fullPath] = parentFolder
+				p.folders[fullPath] = folder
 			}
 		}
+		parentFolder = folder
 	}
 
 	// At this point, the parent folder is whatever was last in the list and can
