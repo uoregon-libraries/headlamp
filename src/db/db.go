@@ -3,8 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/Nerdmaster/magicsql"
 	_ "github.com/mattn/go-sqlite3" // database/sql requires "side-effect" packages be loaded
@@ -123,34 +122,85 @@ func (op *Operation) FindOrCreateProject(name string) (*Project, error) {
 	return project, op.Operation.Err()
 }
 
+// FindFolderByPath looks for a folder with the given path under the given project
+func (op *Operation) FindFolderByPath(p *Project, path string) (*Folder, error) {
+	var folder = &Folder{}
+	var ok = op.Folders.Select().Where("project_id = ? AND path = ?", p.ID, path).First(folder)
+	if !ok {
+		folder = nil
+	}
+	return folder, op.Operation.Err()
+}
+
 // FindOrCreateFolder centralizes the creation and DB-save operation for folders
 func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
-	var parts = strings.Split(path, string(os.PathSeparator))
 	var parentFolderID = 0
 	if f != nil {
 		parentFolderID = f.ID
 	}
-	var newFolder Folder
-	var sel = op.Folders.Select()
-	sel = sel.Where("project_id = ? AND path = ?", p.ID, path)
-	var ok = sel.First(&newFolder)
-	if ok {
-		if newFolder.FolderID != parentFolderID {
+	var folder, err = op.FindFolderByPath(p, path)
+	if err != nil {
+		return nil, err
+	}
+	if folder != nil {
+		if folder.FolderID != parentFolderID {
 			return nil, fmt.Errorf("existing record with different parent found")
 		}
-		newFolder.Folder = f
-		newFolder.Project = p
-		return &newFolder, nil
+		folder.Folder = f
+		folder.Project = p
+		return folder, nil
 	}
 
-	newFolder = Folder{
+	var _, filename = filepath.Split(path)
+	var newFolder = Folder{
 		Folder:    f,
 		FolderID:  parentFolderID,
 		Project:   p,
 		ProjectID: p.ID,
 		Path:      path,
-		Name:      parts[len(parts)-1],
+		Name:      filename,
 	}
 	op.Folders.Save(&newFolder)
 	return &newFolder, op.Operation.Err()
+}
+
+// GetFolders returns all folders with the given project and parent folder.  A
+// parent folder of nil can be used to pull all top-level folders.
+func (op *Operation) GetFolders(project *Project, folder *Folder) ([]*Folder, error) {
+	var folders []*Folder
+	var fid int
+	if folder != nil {
+		fid = folder.ID
+	}
+	op.Folders.Select().
+		Where("project_id = ? AND folder_id = ?", project.ID, fid).
+		Order("LOWER(name)").
+		AllObjects(&folders)
+
+	for _, f := range folders {
+		f.Folder = folder
+		f.Project = project
+	}
+	return folders, op.Operation.Err()
+}
+
+// GetFiles returns all files with the given project and parent folder.  A
+// parent folder of nil can be used to pull all top-level files.
+func (op *Operation) GetFiles(project *Project, folder *Folder, limit uint64) ([]*File, uint64, error) {
+	var files []*File
+	var fid int
+	if folder != nil {
+		fid = folder.ID
+	}
+	var sel = op.Files.Select().
+		Where("project_id = ? AND folder_id = ?", project.ID, fid).
+		Order("LOWER(name)")
+
+	var count = sel.Count().RowCount()
+	sel.Limit(limit).AllObjects(&files)
+	for _, f := range files {
+		f.Folder = folder
+		f.Project = project
+	}
+	return files, count, op.Operation.Err()
 }

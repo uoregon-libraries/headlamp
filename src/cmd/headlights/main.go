@@ -41,6 +41,7 @@ func startServer(baseURL, bind string) *http.Server {
 
 	var basePath = strings.TrimRight(u.Path, "/")
 	mux.HandleFunc(basePath+"/", homeHandler)
+	mux.HandleFunc(basePath+"/browse/", browseHandler)
 
 	var staticPath = filepath.Join(filepath.Dir(os.Args[2]), "static")
 	var fileServer = http.FileServer(http.Dir(staticPath))
