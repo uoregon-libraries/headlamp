@@ -67,63 +67,99 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func browseHandler(w http.ResponseWriter, r *http.Request) {
-	// We need to at least have a project name after /browse; the rest of the URL
-	// path is optional but would represent the folder structure if present
+type browseSearchData struct {
+	op         *db.Operation
+	pName      string
+	project    *db.Project
+	folderPath string
+	folder     *db.Folder
+	hadError   bool
+}
+
+// getBrowseSearchData centralizes some of the common things we need to check /
+// pull from the database for both browsing and searching:
+//
+// - Get the current project, if this isn't a top-level search
+// - Get the current folder, if one is set
+func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchData {
+	var bsd browseSearchData
+	var bsde = browseSearchData{hadError: true}
 	var parts = strings.Split(r.URL.Path, "/")
-	if len(parts) < 2 || parts[2] == "" {
-		_400(w, "Invalid request")
-		logger.Debugf("invalid request")
-		return
-	}
-	var pName = parts[2]
-	var folderPath = filepath.Join(parts[3:]...)
 
 	// We're doing a lot, so let's grab a single operation for all this lovely work
-	var op = dbh.Operation()
+	bsd.op = dbh.Operation()
 
-	var project, err = op.FindProjectByName(pName)
+	// This shouldn't happen unless we screw something up elsewhere in the code
+	if len(parts) < 1 || parts[1] == "" {
+		_400(w, "Invalid request")
+		logger.Debugf("invalid request")
+		return bsde
+	}
+
+	if len(parts) < 2 {
+		return bsd
+	}
+
+	bsd.pName = parts[2]
+	bsd.folderPath = filepath.Join(parts[3:]...)
+
+	// This is acceptable in some situations, so we don't want to explode due to
+	// missing project
+	if bsd.pName == "" {
+		return bsd
+	}
+
+	var err error
+	bsd.project, err = bsd.op.FindProjectByName(bsd.pName)
 	if err != nil {
-		logger.Errorf("Error trying to read project %q from the database: %s", pName, err)
-		_500(w, fmt.Sprintf("Error trying to find project %q.  Try again or contact support.", pName))
-		return
+		logger.Errorf("Error trying to read project %q from the database: %s", bsd.pName, err)
+		_500(w, fmt.Sprintf("Error trying to find project %q.  Try again or contact support.", bsd.pName))
+		return bsde
 	}
-	if project == nil {
-		_404(w, fmt.Sprintf("Project %q not found", pName))
-		return
+	if bsd.project == nil {
+		_404(w, fmt.Sprintf("Project %q not found", bsd.pName))
+		return bsde
 	}
 
-	var folder *db.Folder
-	if folderPath != "" {
-		folder, err = op.FindFolderByPath(project, folderPath)
+	if bsd.folderPath != "" {
+		bsd.folder, err = bsd.op.FindFolderByPath(bsd.project, bsd.folderPath)
 		if err != nil {
-			logger.Errorf("Error trying to read folder %q (in project %q) from the database: %s", folderPath, pName, err)
-			_500(w, fmt.Sprintf("Error trying to find folder %q.  Try again or contact support.", folderPath))
-			return
+			logger.Errorf("Error trying to read folder %q (in project %q) from the database: %s",
+				bsd.folderPath, bsd.pName, err)
+			_500(w, fmt.Sprintf("Error trying to find folder %q.  Try again or contact support.", bsd.folderPath))
+			return bsde
 		}
-		if folder == nil {
-			_404(w, fmt.Sprintf("Folder %q not found", folderPath))
-			return
+		if bsd.folder == nil {
+			_404(w, fmt.Sprintf("Folder %q not found", bsd.folderPath))
+			return bsde
 		}
 	}
 
-	var folders []*db.Folder
-	folders, err = op.GetFolders(project, folder)
+	return bsd
+}
+
+func browseHandler(w http.ResponseWriter, r *http.Request) {
+	var bsd = getBrowseSearchData(w, r)
+	if bsd.hadError {
+		return
+	}
+
+	var folders, err = bsd.op.GetFolders(bsd.project, bsd.folder)
 	if err != nil {
 		logger.Errorf("Error trying to read folders under %q (in project %q) from the database: %s",
-			folderPath, pName, err)
-		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", folderPath))
+			bsd.folderPath, bsd.pName, err)
+		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
 		return
 	}
 
 	var files []*db.File
 	var totalFileCount uint64
 	var tooManyFiles = false
-	files, totalFileCount, err = op.GetFiles(project, folder, maxFiles+1)
+	files, totalFileCount, err = bsd.op.GetFiles(bsd.project, bsd.folder, maxFiles+1)
 	if err != nil {
 		logger.Errorf("Error trying to read files under %q (in project %q) from the database: %s",
-			folderPath, pName, err)
-		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", folderPath))
+			bsd.folderPath, bsd.pName, err)
+		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
 		return
 	}
 	if len(files) > maxFiles {
@@ -132,9 +168,9 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = browse.Execute(w, vars{
-		"Title":        fmt.Sprintf("Headlights: Browsing %s", project.Name),
-		"Project":      project,
-		"Folder":       folder,
+		"Title":        fmt.Sprintf("Headlights: Browsing %s", bsd.project.Name),
+		"Project":      bsd.project,
+		"Folder":       bsd.folder,
 		"Subfolders":   folders,
 		"Files":        files,
 		"TooManyFiles": tooManyFiles,
@@ -142,6 +178,6 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		"TotalFiles":   totalFileCount,
 	})
 	if err != nil {
-		logger.Errorf("Unable to render home template: %s", err)
+		logger.Errorf("Unable to render browse template: %s", err)
 	}
 }
