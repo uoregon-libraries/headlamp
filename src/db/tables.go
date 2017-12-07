@@ -1,5 +1,7 @@
 package db
 
+import "path/filepath"
+
 // Project maps to the projects database table, which represents a "magic"
 // dark-archive directory we expose as if it's a top-level directory for
 // browsing files
@@ -44,4 +46,10 @@ type File struct {
 	Name        string
 	FullPath    string
 	PublicPath  string
+}
+
+// ContainingFolder returns the path to the file's folder for cases where
+// loading the folder data for each file would be an unnecessary task
+func (f *File) ContainingFolder() string {
+	return filepath.Dir(f.PublicPath)
 }

@@ -2,6 +2,7 @@
 <table class="files table table-striped">
   <tr>
     <th scope="col">Project</th>
+    <th scope="col">Folder</th>
     <th scope="col">Archive Date</th>
     <th scope="col">Filename</th>
   </tr>
@@ -10,6 +11,9 @@
   <tr>
     <td>
       <a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>
+    </td>
+    <td>
+      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder}}</a>
     </td>
     <td>
       {{.ArchiveDate}}
