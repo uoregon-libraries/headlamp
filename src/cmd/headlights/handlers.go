@@ -157,7 +157,6 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 
 	var files []*db.File
 	var totalFileCount uint64
-	var tooManyFiles = false
 	files, totalFileCount, err = bsd.op.GetFiles(bsd.project, bsd.folder, maxFiles+1)
 	if err != nil {
 		logger.Errorf("Error trying to read files under %q (in project %q) from the database: %s",
@@ -165,6 +164,8 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
 		return
 	}
+
+	var tooManyFiles = false
 	if len(files) > maxFiles {
 		files = files[:maxFiles]
 		tooManyFiles = true
