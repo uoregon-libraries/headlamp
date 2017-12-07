@@ -3,7 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/Nerdmaster/magicsql"
@@ -123,34 +123,135 @@ func (op *Operation) FindOrCreateProject(name string) (*Project, error) {
 	return project, op.Operation.Err()
 }
 
+// FindFolderByPath looks for a folder with the given path under the given project
+func (op *Operation) FindFolderByPath(p *Project, path string) (*Folder, error) {
+	var folder = &Folder{}
+	var ok = op.Folders.Select().Where("project_id = ? AND path = ?", p.ID, path).First(folder)
+	if !ok {
+		folder = nil
+	}
+	return folder, op.Operation.Err()
+}
+
 // FindOrCreateFolder centralizes the creation and DB-save operation for folders
 func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
-	var parts = strings.Split(path, string(os.PathSeparator))
 	var parentFolderID = 0
 	if f != nil {
 		parentFolderID = f.ID
 	}
-	var newFolder Folder
-	var sel = op.Folders.Select()
-	sel = sel.Where("project_id = ? AND path = ?", p.ID, path)
-	var ok = sel.First(&newFolder)
-	if ok {
-		if newFolder.FolderID != parentFolderID {
+	var folder, err = op.FindFolderByPath(p, path)
+	if err != nil {
+		return nil, err
+	}
+	if folder != nil {
+		if folder.FolderID != parentFolderID {
 			return nil, fmt.Errorf("existing record with different parent found")
 		}
-		newFolder.Folder = f
-		newFolder.Project = p
-		return &newFolder, nil
+		folder.Folder = f
+		folder.Project = p
+		return folder, nil
 	}
 
-	newFolder = Folder{
+	var _, filename = filepath.Split(path)
+	var newFolder = Folder{
 		Folder:    f,
 		FolderID:  parentFolderID,
 		Project:   p,
 		ProjectID: p.ID,
 		Path:      path,
-		Name:      parts[len(parts)-1],
+		Name:      filename,
 	}
 	op.Folders.Save(&newFolder)
 	return &newFolder, op.Operation.Err()
+}
+
+// GetFolders returns all folders with the given project and parent folder.  A
+// parent folder of nil can be used to pull all top-level folders.
+func (op *Operation) GetFolders(project *Project, folder *Folder) ([]*Folder, error) {
+	var folders []*Folder
+	var fid int
+	if folder != nil {
+		fid = folder.ID
+	}
+	op.Folders.Select().
+		Where("project_id = ? AND folder_id = ?", project.ID, fid).
+		Order("LOWER(name)").
+		AllObjects(&folders)
+
+	for _, f := range folders {
+		f.Folder = folder
+		f.Project = project
+	}
+	return folders, op.Operation.Err()
+}
+
+// GetFiles returns all files with the given project and parent folder.  A
+// parent folder of nil can be used to pull all top-level files.
+func (op *Operation) GetFiles(project *Project, folder *Folder, limit uint64) ([]*File, uint64, error) {
+	var files []*File
+	var fid int
+	if folder != nil {
+		fid = folder.ID
+	}
+	var sel = op.Files.Select().
+		Where("project_id = ? AND folder_id = ?", project.ID, fid).
+		Order("LOWER(name)")
+
+	var count = sel.Count().RowCount()
+	sel.Limit(limit).AllObjects(&files)
+	for _, f := range files {
+		f.Folder = folder
+		f.Project = project
+	}
+	return files, count, op.Operation.Err()
+}
+
+// SearchFiles finds all files which are *descendents* of the given
+// project/folder and match the term
+//
+// Note that folder data is *not* filled in on the returns files.  Pulling
+// folders from the database is unnecessary since all folder lookups are via
+// path, so this reduces the amount of information we pull from the database
+// and simplifies the code quite a bit.
+func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, limit uint64) ([]*File, uint64, error) {
+	var wherePieces = []string{"public_path LIKE ?"}
+	var whereArgs = []interface{}{term}
+
+	if project != nil {
+		wherePieces = append(wherePieces, "project_id = ?")
+		whereArgs = append(whereArgs, project.ID)
+	}
+	if folder != nil {
+		wherePieces = append(wherePieces, "public_path like ?")
+		whereArgs = append(whereArgs, folder.Path+"%")
+	}
+
+	var sel = op.Files.Select()
+	sel = sel.Where(strings.Join(wherePieces, " AND "), whereArgs...)
+	sel = sel.Order("LOWER(public_path)")
+
+	var count = sel.Count().RowCount()
+	var files []*File
+	sel.Limit(limit).AllObjects(&files)
+
+	// If project is blank, pull project from db
+	if project == nil {
+		var projectLookup = make(map[int]*Project)
+		var projectList, err = op.AllProjects()
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, p := range projectList {
+			projectLookup[p.ID] = p
+		}
+		for _, f := range files {
+			f.Project = projectLookup[f.ProjectID]
+		}
+	} else {
+		for _, f := range files {
+			f.Project = project
+		}
+	}
+
+	return files, count, op.Operation.Err()
 }

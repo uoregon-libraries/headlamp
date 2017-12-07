@@ -2,13 +2,13 @@
 
 <h2>Search</h2>
 <p><strong>Note that top-level searches can be extremely slow!</strong></p>
-TODO: form
+{{template "searchForm" .}}
 
 <h2>Browse Projects</h2>
 
 <div class="row projects">
 {{range .Projects}}
-  <div class="col-md-4 project"><a href="{{BrowseProjectPath .ID}}">{{.Name}}</a></div>
+  <div class="col-md-4 project"><a href="{{BrowseProjectPath .}}">{{.Name}}</a></div>
 {{end}}
 </div>
 

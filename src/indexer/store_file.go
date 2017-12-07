@@ -59,6 +59,8 @@ func (p *project) buildFile(i *db.Inventory, f *db.Folder, r fileRecord) *db.Fil
 	if f != nil {
 		fid = f.ID
 	}
+
+	var _, fname = filepath.Split(r.fullPath)
 	return &db.File{
 		Project:     p.Project,
 		ProjectID:   p.Project.ID,
@@ -71,6 +73,7 @@ func (p *project) buildFile(i *db.Inventory, f *db.Folder, r fileRecord) *db.Fil
 		Filesize:    r.filesize,
 		FullPath:    r.fullPath,
 		PublicPath:  r.publicPath,
+		Name:        fname,
 	}
 }
 

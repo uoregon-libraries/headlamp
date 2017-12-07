@@ -4,7 +4,7 @@
 		{
 			"importpath": "github.com/Nerdmaster/magicsql",
 			"repository": "https://github.com/Nerdmaster/magicsql",
-			"revision": "2f8a193aa15b5d7e66a6554aa6be9d7bfdb2ffe8",
+			"revision": "1feed1b3eac8e0911f050c83ce226349456edaa4",
 			"branch": "HEAD"
 		},
 		{
@@ -16,7 +16,7 @@
 		{
 			"importpath": "github.com/uoregon-libraries/gopkg",
 			"repository": "https://github.com/uoregon-libraries/gopkg",
-			"revision": "cc4c1158543fae4520f22e74f50831be61cd8d2d",
+			"revision": "870b8ffd3256fbc67d4b6bd57f7f6e126c98e8d4",
 			"branch": "master"
 		},
 		{
