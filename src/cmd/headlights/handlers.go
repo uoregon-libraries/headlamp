@@ -17,7 +17,7 @@ import (
 const maxFiles = 1000
 
 var root *tmpl.TRoot
-var home, browse, empty *tmpl.Template
+var home, browse, search, empty *tmpl.Template
 
 func initTemplates(webroot string) {
 	webutil.Webroot = webroot
@@ -28,6 +28,9 @@ func initTemplates(webroot string) {
 	root.MustReadPartials("layout.go.html", "_search_form.go.html")
 	home = root.Clone().MustBuild("home.go.html")
 	browse = root.Clone().MustBuild("browse.go.html")
+	var searchRoot = root.Clone()
+	searchRoot.MustReadPartials("_files_table.go.html")
+	search = searchRoot.Clone().MustBuild("search.go.html")
 	empty = root.Template()
 }
 
@@ -172,6 +175,47 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		"Project":      bsd.project,
 		"Folder":       bsd.folder,
 		"Subfolders":   folders,
+		"Files":        files,
+		"TooManyFiles": tooManyFiles,
+		"MaxFiles":     maxFiles,
+		"TotalFiles":   totalFileCount,
+	})
+	if err != nil {
+		logger.Errorf("Unable to render browse template: %s", err)
+	}
+}
+
+func searchHandler(w http.ResponseWriter, r *http.Request) {
+	var term = r.URL.Query().Get("q")
+	if term == "" {
+		_400(w, "You must provide a search term")
+		return
+	}
+
+	var bsd = getBrowseSearchData(w, r)
+	if bsd.hadError {
+		return
+	}
+
+	var files, totalFileCount, err = bsd.op.SearchFiles(bsd.project, bsd.folder, term, maxFiles+1)
+	if err != nil {
+		logger.Errorf("Error trying to read files under %q (in project %q) from the database: %s",
+			bsd.folderPath, bsd.pName, err)
+		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
+		return
+	}
+
+	var tooManyFiles = false
+	if len(files) > maxFiles {
+		files = files[:maxFiles]
+		tooManyFiles = true
+	}
+
+	err = search.Execute(w, vars{
+		"Title":        fmt.Sprintf("Headlights: Search"),
+		"SearchTerm":   term,
+		"Project":      bsd.project,
+		"Folder":       bsd.folder,
 		"Files":        files,
 		"TooManyFiles": tooManyFiles,
 		"MaxFiles":     maxFiles,

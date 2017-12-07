@@ -1,0 +1,34 @@
+{{block "content" .}}
+
+<h2>Search</h2>
+{{template "searchForm" .}}
+
+<h2>Results</h2>
+
+<p>
+  Search results for "{{.SearchTerm}}"
+  {{if .Project}}
+    under {{.Project.Name}}{{if .Folder}}/{{.Folder.Path}}{{end}}
+  {{end}}
+</p>
+
+{{if .Files}}
+
+{{if .TooManyFiles}}
+<p class="alert alert-warning">
+  There are too many files to display.  Showing the top {{.MaxFiles}} out of
+  {{.TotalFiles}}; try searching (or refining your search) for something more
+  unique.
+</p>
+{{end}}
+
+{{template "filesTable" .Files}}
+
+{{else}}<!-- if .Files -->
+<p class="alert alert-warning">
+  Your search yielded no results
+</p>
+{{end}}<!-- if .Files -->
+
+{{end}}<!-- block "content" -->
+

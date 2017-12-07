@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/Nerdmaster/magicsql"
 	_ "github.com/mattn/go-sqlite3" // database/sql requires "side-effect" packages be loaded
@@ -202,5 +203,55 @@ func (op *Operation) GetFiles(project *Project, folder *Folder, limit uint64) ([
 		f.Folder = folder
 		f.Project = project
 	}
+	return files, count, op.Operation.Err()
+}
+
+// SearchFiles finds all files which are *descendents* of the given
+// project/folder and match the term
+//
+// Note that folder data is *not* filled in on the returns files.  Pulling
+// folders from the database is unnecessary since all folder lookups are via
+// path, so this reduces the amount of information we pull from the database
+// and simplifies the code quite a bit.
+func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, limit uint64) ([]*File, uint64, error) {
+	var wherePieces = []string{"public_path LIKE ?"}
+	var whereArgs = []interface{}{term}
+
+	if project != nil {
+		wherePieces = append(wherePieces, "project_id = ?")
+		whereArgs = append(whereArgs, project.ID)
+	}
+	if folder != nil {
+		wherePieces = append(wherePieces, "public_path like ?")
+		whereArgs = append(whereArgs, folder.Path+"%")
+	}
+
+	var sel = op.Files.Select()
+	sel = sel.Where(strings.Join(wherePieces, " AND "), whereArgs...)
+	sel = sel.Order("LOWER(public_path)")
+
+	var count = sel.Count().RowCount()
+	var files []*File
+	sel.Limit(limit).AllObjects(&files)
+
+	// If project is blank, pull project from db
+	if project == nil {
+		var projectLookup = make(map[int]*Project)
+		var projectList, err = op.AllProjects()
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, p := range projectList {
+			projectLookup[p.ID] = p
+		}
+		for _, f := range files {
+			f.Project = projectLookup[f.ProjectID]
+		}
+	} else {
+		for _, f := range files {
+			f.Project = project
+		}
+	}
+
 	return files, count, op.Operation.Err()
 }

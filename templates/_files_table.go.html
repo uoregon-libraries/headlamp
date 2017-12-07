@@ -1,0 +1,23 @@
+{{define "filesTable"}}
+<table class="files table table-striped">
+  <tr>
+    <th scope="col">Project</th>
+    <th scope="col">Archive Date</th>
+    <th scope="col">Filename</th>
+  </tr>
+
+{{range .}}
+  <tr>
+    <td>
+      <a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>
+    </td>
+    <td>
+      {{.ArchiveDate}}
+    </td>
+    <td>
+      <a href="{{DownloadFilePath .}}">{{.Name}}</a>
+    </td>
+  </tr>
+{{end}}
+</table>
+{{end}}
