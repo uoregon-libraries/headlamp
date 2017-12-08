@@ -1,4 +1,4 @@
-Headlights
+Headlamp
 ===
 
 Shining light into your dark archive since 2017.  Or 2018.  Or whenever this
@@ -16,7 +16,7 @@ Quick Usage
 
 ### Install Go
 
-Install [Go](https://golang.org/dl/), preferably 1.9 or later.  Headlights may
+Install [Go](https://golang.org/dl/), preferably 1.9 or later.  Headlamp may
 work on older versions, but I haven't tested it.
 
 Note that you can install Go without root access just by unpacking one of the
@@ -30,8 +30,8 @@ binary tarballs and exporting some environment variables, such as:
 
     go get github.com/constabulary/gb/...
     go get bitbucket.org/liamstask/goose/cmd/goose
-    git clone https://github.com/uoregon-libraries/headlights.git
-    cd headlights
+    git clone https://github.com/uoregon-libraries/headlamp.git
+    cd headlamp
     goose up
     make
 
@@ -45,13 +45,13 @@ files it hasn't yet indexed.
 
 ### Start the web server
 
-    ./bin/headlights "http://some.site.example.com/" ":8080"
+    ./bin/headlamp "http://some.site.example.com/" ":8080"
 
 Inventory Files
 ---
 
-The key to Headlights is the inventory files generated when batches are
-uploaded to the dark archive.  These files are how Headlights knows what
+The key to Headlamp is the inventory files generated when batches are
+uploaded to the dark archive.  These files are how Headlamp knows what
 exists; scanning the entire dark archive would be a significantly slower
 process.
 
@@ -73,7 +73,7 @@ contained the inventory file.  So in our world, we might have
 files described therein would be found relative to
 `/path/to/dark-archive/foo/projectname`.
 
-As a special case, Headlights will **not process or look at or even offer a
+As a special case, Headlamp will **not process or look at or even offer a
 friendly wave to** any files called `manifest.csv`!  That file, for UO,
 contains a comprehensive list of all other inventories as an easier way to do
 things like data-rot detection.
