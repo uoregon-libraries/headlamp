@@ -45,6 +45,9 @@ func stripProjectFolder(f *db.Folder, path string) string {
 	}
 	path = strings.TrimPrefix(path, f.Path)
 	path = strings.TrimPrefix(path, "/") // Just to make sure there's no starting slash
+	if path == "" {
+		path = "."
+	}
 	return path
 }
 
