@@ -1,7 +1,6 @@
 {{block "content" .}}
 
-TODO: make breadcrumbs from each path element
-<div class="breadcrumb">{{.Project.Name}}{{if .Folder}}/{{.Folder.Path}}{{end}}</div>
+{{BreadCrumbs .Project .Folder}}
 
 <h2>Search</h2>
 {{template "searchForm" .}}
