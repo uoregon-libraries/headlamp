@@ -7,13 +7,13 @@
     <th scope="col">Filename</th>
   </tr>
 
-{{range .}}
+{{range .Files}}
   <tr>
     <td>
       <a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>
     </td>
     <td>
-      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder}}</a>
+      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder | stripProjectFolder $.Folder}}</a>
     </td>
     <td>
       {{.ArchiveDate}}
