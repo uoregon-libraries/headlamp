@@ -5,33 +5,7 @@
 <h2>Search</h2>
 {{template "searchForm" .}}
 
-<h2>Browse Subfolders</h2>
-
-<div class="folders">
-{{range .Subfolders}}
-  <div class="col-md-4 folder"><a href="{{BrowseFolderPath .}}">{{.Name}}</a></div>
-{{end}}
-</div>
-
-{{if .Files}}
-
-<h2>Browse Files</h2>
-
-{{if .TooManyFiles}}
-<p class="alert alert-warning">
-  There are too many files to display.  Showing the top {{.MaxFiles}} out of
-  {{.TotalFiles}}; try searching (or refining your search) for something more
-  unique.
-</p>
-{{end}}
-
-<div class="files">
-{{range .Files}}
-  <div class="col-md-4 file"><a href="{{DownloadFilePath .}}">{{.Name}}</a></div>
-{{end}}
-</div>
-
-{{end}}<!-- if .Files -->
+{{template "foldersAndFiles" .}}
 
 {{end}}<!-- block "content" -->
 

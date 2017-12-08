@@ -25,12 +25,10 @@ func initTemplates(webroot string) {
 	root.Funcs(tmpl.DefaultTemplateFunctions)
 	root.Funcs(webutil.FuncMap)
 	root.Funcs(localTemplateFuncs)
-	root.MustReadPartials("layout.go.html", "_search_form.go.html")
+	root.MustReadPartials("layout.go.html", "_search_form.go.html", "_tables.go.html")
 	home = root.Clone().MustBuild("home.go.html")
 	browse = root.Clone().MustBuild("browse.go.html")
-	var searchRoot = root.Clone()
-	searchRoot.MustReadPartials("_files_table.go.html")
-	search = searchRoot.Clone().MustBuild("search.go.html")
+	search = root.Clone().MustBuild("search.go.html")
 	empty = root.Template()
 }
 

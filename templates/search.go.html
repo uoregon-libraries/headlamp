@@ -14,23 +14,13 @@
   {{end}}
 </p>
 
-{{if .Files}}
+{{template "foldersAndFiles" .}}
 
-{{if .TooManyFiles}}
-<p class="alert alert-warning">
-  There are too many files to display.  Showing the top {{.MaxFiles}} out of
-  {{.TotalFiles}}; try searching (or refining your search) for something more
-  unique.
-</p>
-{{end}}
-
-{{template "filesTable" .}}
-
-{{else}}<!-- if .Files -->
+{{if not .Files}}
 <p class="alert alert-warning">
   Your search yielded no results
 </p>
-{{end}}<!-- if .Files -->
+{{end}}
 
 {{end}}<!-- block "content" -->
 

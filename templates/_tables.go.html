@@ -1,0 +1,64 @@
+{{define "foldersTable"}}
+<table class="files table table-striped">
+  <tr>
+    {{if not $.Project}}<th scope="col">Project</th>{{end}}
+    <th scope="col">Name</th>
+  </tr>
+
+{{range .Subfolders}}
+  <tr>
+    {{if not $.Project}}<td><a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>{{end}}
+    <td><a href="{{BrowseFolderPath .}}">{{.Name}}</a></td>
+  </tr>
+{{end}}
+</table>
+{{end}}
+
+{{define "filesTable"}}
+<table class="files table table-striped">
+  <tr>
+    {{if not $.Project}}<th scope="col">Project</th>{{end}}
+    <th scope="col">Folder</th>
+    <th scope="col">Archive Date</th>
+    <th scope="col">Filename</th>
+  </tr>
+
+{{range .Files}}
+  <tr>
+    {{if not $.Project}}
+    <td>
+      <a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>
+    </td>
+    {{end}}
+    <td>
+      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder | stripProjectFolder $.Folder}}</a>
+    </td>
+    <td>
+      {{.ArchiveDate}}
+    </td>
+    <td>
+      <a href="{{DownloadFilePath .}}">{{.Name}}</a>
+    </td>
+  </tr>
+{{end}}
+</table>
+{{end}}
+
+{{define "foldersAndFiles"}}
+{{if .Subfolders}}
+<h2>Subfolders</h2>
+{{template "foldersTable" .}}
+{{end}}
+
+{{if .Files}}
+<h2>Files</h2>
+{{if .TooManyFiles}}
+<p class="alert alert-warning">
+  There are too many files to display.  Showing the top {{.MaxFiles}} out of
+  {{.TotalFiles}}; try searching (or refining your search) for something more
+  unique.
+</p>
+{{end}} <!-- if .TooManyFiles -->
+{{template "filesTable" .}}
+{{end}} <!-- if .Files -->
+{{end}} <!-- foldersAndFiles -->
