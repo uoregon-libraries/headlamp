@@ -64,7 +64,7 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = home.Execute(w, vars{"Title": "Headlights", "Projects": projects})
+	err = home.Execute(w, vars{"Title": "Headlamp", "Projects": projects})
 	if err != nil {
 		logger.Errorf("Unable to render home template: %s", err)
 	}
@@ -172,7 +172,7 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = browse.Execute(w, vars{
-		"Title":        fmt.Sprintf("Headlights: Browsing %s", bsd.project.Name),
+		"Title":        fmt.Sprintf("Headlamp: Browsing %s", bsd.project.Name),
 		"Project":      bsd.project,
 		"Folder":       bsd.folder,
 		"Subfolders":   folders,
@@ -213,7 +213,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = search.Execute(w, vars{
-		"Title":        fmt.Sprintf("Headlights: Search"),
+		"Title":        fmt.Sprintf("Headlamp: Search"),
 		"SearchTerm":   term,
 		"Project":      bsd.project,
 		"Folder":       bsd.folder,
