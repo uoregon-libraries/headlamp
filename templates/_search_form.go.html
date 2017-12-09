@@ -1,7 +1,7 @@
 {{define "searchForm"}}
 <form action="/search/{{if .Project}}{{.Project.Name}}{{if .Folder}}/{{.Folder.Path}}{{end}}{{end}}" method="GET">
   <label>
-  Search Terms
+  Search For Files
   <input type="text" name="q" value="{{.SearchTerm}}" aria-describedby="search-hint" />
   </label>
   <p class="hint" id="search-hint">
@@ -9,6 +9,17 @@
     search.  Use a percentage sign (%) for wildcard matching.  e.g.,
     "%/folder1/folder2%.tiff" would match "foo/folder1/folder2/file.tiff" as
     well as "foo/bar/baz/folder1/folder2/folder3/file.tiff".
+  </p>
+</form>
+
+<form action="/search/{{if .Project}}{{.Project.Name}}{{if .Folder}}/{{.Folder.Path}}{{end}}{{end}}" method="GET">
+  <label>
+  Search For Folders
+  <input type="text" name="fq" value="{{.FolderSearchTerm}}" aria-describedby="search-hint" />
+  </label>
+  <p class="hint" id="search-hint">
+    Enter the name of the folder for which you wish to search.  Use a
+    percentage sign (%) for wildcard matching.
   </p>
 </form>
 {{end}}

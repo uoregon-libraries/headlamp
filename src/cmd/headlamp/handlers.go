@@ -173,7 +173,7 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		"Title":        fmt.Sprintf("Headlamp: Browsing %s", bsd.project.Name),
 		"Project":      bsd.project,
 		"Folder":       bsd.folder,
-		"Subfolders":   folders,
+		"Folders":      folders,
 		"Files":        files,
 		"TooManyFiles": tooManyFiles,
 		"MaxFiles":     maxFiles,
@@ -185,8 +185,9 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
-	var term = r.URL.Query().Get("q")
-	if term == "" {
+	var q = r.URL.Query().Get("q")
+	var fq = r.URL.Query().Get("fq")
+	if q == "" && fq == "" {
 		_400(w, "You must provide a search term")
 		return
 	}
@@ -196,11 +197,19 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if fq != "" {
+		folderSearch(w, r, bsd, fq)
+		return
+	}
+	fileSearch(w, r, bsd, q)
+}
+
+func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, term string) {
 	var files, totalFileCount, err = bsd.op.SearchFiles(bsd.project, bsd.folder, term, maxFiles+1)
 	if err != nil {
-		logger.Errorf("Error trying to read files under %q (in project %q) from the database: %s",
+		logger.Errorf("Error trying to search for files under %q (in project %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
-		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
+		_500(w, "Error trying to search for folders.  Try again or contact support.")
 		return
 	}
 
@@ -211,7 +220,7 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = search.Execute(w, vars{
-		"Title":        fmt.Sprintf("Headlamp: Search"),
+		"Title":        fmt.Sprintf("Headlamp: File Search"),
 		"SearchTerm":   term,
 		"Project":      bsd.project,
 		"Folder":       bsd.folder,
@@ -221,6 +230,27 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 		"TotalFiles":   totalFileCount,
 	})
 	if err != nil {
-		logger.Errorf("Unable to render browse template: %s", err)
+		logger.Errorf("Unable to render search template: %s", err)
+	}
+}
+
+func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, term string) {
+	var folders, err = bsd.op.SearchFolders(bsd.project, bsd.folder, term)
+	if err != nil {
+		logger.Errorf("Error trying to search for folders under %q (in project %q) from the database: %s",
+			bsd.folderPath, bsd.pName, err)
+		_500(w, "Error trying to search for folders.  Try again or contact support.")
+		return
+	}
+
+	err = search.Execute(w, vars{
+		"Title":            fmt.Sprintf("Headlamp: Folder Search"),
+		"FolderSearchTerm": term,
+		"Project":          bsd.project,
+		"Folder":           bsd.folder,
+		"Folders":          folders,
+	})
+	if err != nil {
+		logger.Errorf("Unable to render search template: %s", err)
 	}
 }

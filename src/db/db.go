@@ -255,3 +255,51 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 
 	return files, count, op.Operation.Err()
 }
+
+// SearchFolders finds all folders which are *descendents* of the given
+// project/folder and match the term
+//
+// Note that parent folder data is *not* filled in on the returns files.
+// Pulling folders from the database is unnecessary since all folder lookups
+// are via path, so this reduces the amount of information we pull from the
+// database and simplifies the code quite a bit.
+func (op *Operation) SearchFolders(project *Project, folder *Folder, term string) ([]*Folder, error) {
+	var wherePieces = []string{"name LIKE ?"}
+	var whereArgs = []interface{}{term}
+
+	if project != nil {
+		wherePieces = append(wherePieces, "project_id = ?")
+		whereArgs = append(whereArgs, project.ID)
+	}
+	if folder != nil {
+		wherePieces = append(wherePieces, "path like ?")
+		whereArgs = append(whereArgs, folder.Path+"%")
+	}
+
+	var folders []*Folder
+	op.Folders.Select().
+		Where(strings.Join(wherePieces, " AND "), whereArgs...).
+		Order("LOWER(path)").
+		AllObjects(&folders)
+
+	// If project is blank, pull project from db
+	if project == nil {
+		var projectLookup = make(map[int]*Project)
+		var projectList, err = op.AllProjects()
+		if err != nil {
+			return nil, err
+		}
+		for _, p := range projectList {
+			projectLookup[p.ID] = p
+		}
+		for _, f := range folders {
+			f.Project = projectLookup[f.ProjectID]
+		}
+	} else {
+		for _, f := range folders {
+			f.Project = project
+		}
+	}
+
+	return folders, op.Operation.Err()
+}

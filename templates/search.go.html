@@ -8,7 +8,11 @@
 <h2>Results</h2>
 
 <p>
-  Search results for "{{.SearchTerm}}"
+  {{if .SearchTerm}}
+  Files matching "{{.SearchTerm}}"
+  {{else}}
+  Folders matching "{{.FolderSearchTerm}}"
+  {{end}}
   {{if .Project}}
     under {{.Project.Name}}{{if .Folder}}/{{.Folder.Path}}{{end}}
   {{end}}
@@ -16,7 +20,7 @@
 
 {{template "foldersAndFiles" .}}
 
-{{if not .Files}}
+{{if and (not .Files) (not .Folders)}}
 <p class="alert alert-warning">
   Your search yielded no results
 </p>

@@ -5,10 +5,10 @@
     <th scope="col">Name</th>
   </tr>
 
-{{range .Subfolders}}
+{{range .Folders}}
   <tr>
     {{if not $.Project}}<td><a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>{{end}}
-    <td><a href="{{BrowseFolderPath .}}">{{.Name}}</a></td>
+    <td><a href="{{BrowseFolderPath .}}">{{.Path | stripProjectFolder $.Folder}}</a></td>
   </tr>
 {{end}}
 </table>
@@ -45,8 +45,8 @@
 {{end}}
 
 {{define "foldersAndFiles"}}
-{{if .Subfolders}}
-<h2>Subfolders</h2>
+{{if .Folders}}
+<h2>Folders</h2>
 {{template "foldersTable" .}}
 {{end}}
 
