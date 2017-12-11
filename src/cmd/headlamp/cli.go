@@ -32,7 +32,7 @@ func usage(msg string) {
 		status = 1
 	}
 
-	perrf("Usage: %s <bind address> <webpath>", os.Args[0])
+	perrf("Usage: %s <bind address> <webpath> <dark archive path>", os.Args[0])
 	perr("")
 	perr("Example:")
 	perrraw(fmt.Sprintf(`    %s ":8080" "https://foo.bar/subfoo"`, os.Args[0]))
@@ -40,13 +40,13 @@ func usage(msg string) {
 	os.Exit(status)
 }
 
-func getCLI() (string, string) {
-	if len(os.Args) < 3 {
+func getCLI() (string, string, string) {
+	if len(os.Args) < 4 {
 		usage("You must specify all arguments")
 	}
-	if len(os.Args) > 3 {
+	if len(os.Args) > 4 {
 		usage("Too many arguments")
 	}
 
-	return os.Args[1], os.Args[2]
+	return os.Args[1], os.Args[2], os.Args[3]
 }

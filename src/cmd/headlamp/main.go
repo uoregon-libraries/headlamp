@@ -16,9 +16,10 @@ import (
 
 // dbh is our global database handle for DA searches
 var dbh = db.New()
+var baseURL, bind, daRoot string
 
 func main() {
-	var baseURL, bind = getCLI()
+	baseURL, bind, daRoot = getCLI()
 
 	var s = startServer(baseURL, bind)
 	interrupts.TrapIntTerm(func() {
