@@ -303,3 +303,14 @@ func (op *Operation) SearchFolders(project *Project, folder *Folder, term string
 
 	return folders, op.Operation.Err()
 }
+
+// FindFileByID returns the file found by the given ID, or nil if none if
+// found.  Any database errors are passed back to the caller.
+func (op *Operation) FindFileByID(id uint64) (*File, error) {
+	var file = &File{}
+	var ok = op.Files.Select().Where("id = ?", id).First(file)
+	if !ok {
+		file = nil
+	}
+	return file, op.Operation.Err()
+}

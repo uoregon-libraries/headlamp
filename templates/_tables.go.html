@@ -37,7 +37,8 @@
       {{.ArchiveDate}}
     </td>
     <td>
-      <a href="{{DownloadFilePath .}}">{{.Name}}</a>
+      <a href="{{ViewFilePath .}}">{{.Name}}</a>
+      (<a href="{{DownloadFilePath .}}">Download</a>)
     </td>
   </tr>
 {{end}}

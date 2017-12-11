@@ -16,6 +16,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"BrowseProjectPath":          browseProjectPath,
 	"BrowseFolderPath":           browseFolderPath,
 	"BrowseContainingFolderPath": browseContainingFolderPath,
+	"ViewFilePath":               viewFilePath,
 	"DownloadFilePath":           downloadFilePath,
 	"stripProjectFolder":         stripProjectFolder,
 }
@@ -33,8 +34,12 @@ func browseContainingFolderPath(file *db.File) string {
 	return fmt.Sprintf("/browse/%s/%s", file.Project.Name, file.ContainingFolder())
 }
 
+func viewFilePath(file *db.File) string {
+	return fmt.Sprintf("/view/%d", file.ID)
+}
+
 func downloadFilePath(file *db.File) string {
-	return fmt.Sprintf("/download/%s/%s", file.Project.Name, file.PublicPath)
+	return fmt.Sprintf("/download/%d", file.ID)
 }
 
 // stripProjectFolder takes a string representing a path, and strips out the
