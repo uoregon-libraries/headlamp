@@ -16,7 +16,7 @@ type runner struct {
 
 // start kicks off the ticker, refreshing the dark archive inventory list regularly
 func (r *runner) run() {
-	r.ticker = time.NewTicker(time.Minute)
+	r.ticker = time.NewTicker(time.Minute * 15)
 	var reindex = func() {
 		var err = r.indexer.Index()
 		if err != nil {
