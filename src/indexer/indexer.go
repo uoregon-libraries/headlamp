@@ -146,7 +146,8 @@ func (i *Indexer) setState(state int32) {
 	atomic.StoreInt32(&i.state, state)
 }
 
-// findInventoryFiles gathers a list of files matching the Indexer's InventoryPattern
+// findInventoryFiles gathers a list of files matching the Indexer's
+// InventoryPattern that haven't been modified in at least an hour
 func (i *Indexer) findInventoryFiles() ([]string, error) {
 	logger.Debugf("Searching for files matching %q (skipping manifest.csv)", i.c.InventoryPattern)
 	var allFiles, err = filepath.Glob(filepath.Join(i.c.DARoot, i.c.InventoryPattern))
@@ -159,6 +160,16 @@ func (i *Indexer) findInventoryFiles() ([]string, error) {
 			logger.Debugf("Skipping manifest file (%q)", fname)
 			continue
 		}
+		var info, err = os.Stat(fname)
+		if err != nil {
+			logger.Errorf("Skipping %q: could not stat: %s", fname, err)
+			continue
+		}
+		if time.Since(info.ModTime()) < time.Hour {
+			logger.Debugf("Skipping %q: modified too recently (%s)", fname, info.ModTime())
+			continue
+		}
+
 		files = append(files, fname)
 	}
 
