@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gorilla/sessions"
 	"github.com/uoregon-libraries/gopkg/wordutils"
 )
 
@@ -41,6 +42,12 @@ func usage(msg string) {
 }
 
 func getCLI() (string, string, string) {
+	var secret = os.Getenv("COOKIESECRET")
+	if secret == "" {
+		usage("You must set COOKIESECRET")
+	}
+	sessionStore = sessions.NewCookieStore([]byte(secret))
+
 	if len(os.Args) < 4 {
 		usage("You must specify all arguments")
 	}

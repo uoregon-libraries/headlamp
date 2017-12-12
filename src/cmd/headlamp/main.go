@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	gcontext "github.com/gorilla/context"
 	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
@@ -56,7 +57,7 @@ func startServer(baseURL, bind string) *http.Server {
 		basePath = "/"
 	}
 	initTemplates(basePath)
-	var server = &http.Server{Addr: bind, Handler: mux}
+	var server = &http.Server{Addr: bind, Handler: gcontext.ClearHandler(mux)}
 
 	go func() {
 		logger.Infof("Listening for HTTP connections")

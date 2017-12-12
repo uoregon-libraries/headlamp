@@ -28,7 +28,7 @@ func getFile(w http.ResponseWriter, r *http.Request) *os.File {
 	var idString = parts[len(parts)-1]
 	fileID, err = strconv.ParseUint(idString, 10, 64)
 	if err != nil {
-		_400(w, "Invalid request")
+		_400(w, r, "Invalid request")
 		return nil
 	}
 
@@ -36,19 +36,19 @@ func getFile(w http.ResponseWriter, r *http.Request) *os.File {
 	file, err = op.FindFileByID(fileID)
 	if err != nil {
 		logger.Errorf("Error trying to find file id %d: %s", fileID, err)
-		_500(w, "Unable to read the specified file's data.  Try again or contact support.")
+		_500(w, r, "Unable to read the specified file's data.  Try again or contact support.")
 		return nil
 	}
 
 	if file == nil {
-		_404(w, "Unable to find the requested file.  Try again or contact support.")
+		_404(w, r, "Unable to find the requested file.  Try again or contact support.")
 		return nil
 	}
 
 	var fullPath = filepath.Join(daRoot, file.FullPath)
 	if !fileutil.IsFile(fullPath) {
 		logger.Errorf("File id %d describes a file I cannot find: %q / %q", file.ID, daRoot, file.FullPath)
-		_500(w, fmt.Sprintf("Unable to find %q.  Try again or contact support.", file.FullPath))
+		_500(w, r, fmt.Sprintf("Unable to find %q.  Try again or contact support.", file.FullPath))
 		return nil
 	}
 
@@ -56,7 +56,7 @@ func getFile(w http.ResponseWriter, r *http.Request) *os.File {
 	fh, err = os.Open(fullPath)
 	if err != nil {
 		logger.Errorf("Error trying to Open file %q: %s", file.FullPath, err)
-		_500(w, fmt.Sprintf("Unable to open %q.  Try again or contact support.", file.FullPath))
+		_500(w, r, fmt.Sprintf("Unable to open %q.  Try again or contact support.", file.FullPath))
 		return nil
 	}
 
@@ -69,7 +69,7 @@ func getFile(w http.ResponseWriter, r *http.Request) *os.File {
 		var _, err = fh.Seek(0, io.SeekStart)
 		if err != nil {
 			logger.Errorf("Error trying to Seek() on file %q: %s", file.FullPath, err)
-			_500(w, fmt.Sprintf("Unable to read %q.  Try again or contact support.", file.FullPath))
+			_500(w, r, fmt.Sprintf("Unable to read %q.  Try again or contact support.", file.FullPath))
 			return nil
 		}
 	}

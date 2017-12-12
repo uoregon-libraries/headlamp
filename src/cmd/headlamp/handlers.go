@@ -17,7 +17,7 @@ import (
 const maxFiles = 1000
 
 var root *tmpl.TRoot
-var home, browse, search, empty *tmpl.Template
+var home, browse, search, empty *Template
 
 func initTemplates(webroot string) {
 	webutil.Webroot = webroot
@@ -26,46 +26,32 @@ func initTemplates(webroot string) {
 	root.Funcs(webutil.FuncMap)
 	root.Funcs(localTemplateFuncs)
 	root.MustReadPartials("layout.go.html", "_search_form.go.html", "_tables.go.html")
-	home = root.Clone().MustBuild("home.go.html")
-	browse = root.Clone().MustBuild("browse.go.html")
-	search = root.Clone().MustBuild("search.go.html")
-	empty = root.Template()
+	home = &Template{root.Clone().MustBuild("home.go.html")}
+	browse = &Template{root.Clone().MustBuild("browse.go.html")}
+	search = &Template{root.Clone().MustBuild("search.go.html")}
+	empty = &Template{root.Template()}
 }
 
 type vars map[string]interface{}
 
-func _400(w http.ResponseWriter, msg string) {
-	w.WriteHeader(http.StatusBadRequest)
-	empty.Execute(w, vars{"Title": "Invalid Request", "Alert": msg})
-}
-
-func _404(w http.ResponseWriter, msg string) {
-	w.WriteHeader(http.StatusNotFound)
-	empty.Execute(w, vars{"Title": "Not Found", "Alert": msg})
-}
-
-func _500(w http.ResponseWriter, msg string) {
-	w.WriteHeader(http.StatusInternalServerError)
-	empty.Execute(w, vars{"Title": "Error", "Alert": msg})
-}
-
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.String() != "/" {
-		_404(w, "Unable to find the requested resource")
+		_404(w, r, "Unable to find the requested resource")
 		return
 	}
 
+	renderHome(w, r)
+}
+
+func renderHome(w http.ResponseWriter, r *http.Request) {
 	var projects, err = dbh.Operation().AllProjects()
 	if err != nil {
 		logger.Errorf("Unable to find projects: %s", err)
-		_500(w, "Error trying to find project list.  Try again or contact support.")
+		_500(w, r, "Error trying to find project list.  Try again or contact support.")
 		return
 	}
 
-	err = home.Execute(w, vars{"Title": "Headlamp", "Projects": projects})
-	if err != nil {
-		logger.Errorf("Unable to render home template: %s", err)
-	}
+	home.Render(w, r, vars{"Title": "Headlamp", "Projects": projects})
 }
 
 type browseSearchData struct {
@@ -92,7 +78,7 @@ func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchDat
 
 	// This shouldn't happen unless we screw something up elsewhere in the code
 	if len(parts) < 1 || parts[1] == "" {
-		_400(w, "Invalid request")
+		_400(w, r, "Invalid request")
 		logger.Debugf("invalid request")
 		return bsde
 	}
@@ -114,11 +100,11 @@ func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchDat
 	bsd.project, err = bsd.op.FindProjectByName(bsd.pName)
 	if err != nil {
 		logger.Errorf("Error trying to read project %q from the database: %s", bsd.pName, err)
-		_500(w, fmt.Sprintf("Error trying to find project %q.  Try again or contact support.", bsd.pName))
+		_500(w, r, fmt.Sprintf("Error trying to find project %q.  Try again or contact support.", bsd.pName))
 		return bsde
 	}
 	if bsd.project == nil {
-		_404(w, fmt.Sprintf("Project %q not found", bsd.pName))
+		_404(w, r, fmt.Sprintf("Project %q not found", bsd.pName))
 		return bsde
 	}
 
@@ -127,11 +113,11 @@ func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchDat
 		if err != nil {
 			logger.Errorf("Error trying to read folder %q (in project %q) from the database: %s",
 				bsd.folderPath, bsd.pName, err)
-			_500(w, fmt.Sprintf("Error trying to find folder %q.  Try again or contact support.", bsd.folderPath))
+			_500(w, r, fmt.Sprintf("Error trying to find folder %q.  Try again or contact support.", bsd.folderPath))
 			return bsde
 		}
 		if bsd.folder == nil {
-			_404(w, fmt.Sprintf("Folder %q not found", bsd.folderPath))
+			_404(w, r, fmt.Sprintf("Folder %q not found", bsd.folderPath))
 			return bsde
 		}
 	}
@@ -149,7 +135,7 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Errorf("Error trying to read folders under %q (in project %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
-		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
+		_500(w, r, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
 		return
 	}
 
@@ -159,7 +145,7 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Errorf("Error trying to read files under %q (in project %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
-		_500(w, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
+		_500(w, r, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
 		return
 	}
 
@@ -169,7 +155,7 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		tooManyFiles = true
 	}
 
-	err = browse.Execute(w, vars{
+	browse.Render(w, r, vars{
 		"Title":        fmt.Sprintf("Headlamp: Browsing %s", bsd.project.Name),
 		"Project":      bsd.project,
 		"Folder":       bsd.folder,
@@ -179,21 +165,26 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		"MaxFiles":     maxFiles,
 		"TotalFiles":   totalFileCount,
 	})
-	if err != nil {
-		logger.Errorf("Unable to render browse template: %s", err)
-	}
 }
 
 func searchHandler(w http.ResponseWriter, r *http.Request) {
-	var q = r.URL.Query().Get("q")
-	var fq = r.URL.Query().Get("fq")
-	if q == "" && fq == "" {
-		_400(w, "You must provide a search term")
+	var bsd = getBrowseSearchData(w, r)
+	if bsd.hadError {
 		return
 	}
 
-	var bsd = getBrowseSearchData(w, r)
-	if bsd.hadError {
+	var q = r.URL.Query().Get("q")
+	var fq = r.URL.Query().Get("fq")
+	if q == "" && fq == "" {
+		setAlert(w, r, "You must provide a search term")
+		w.WriteHeader(http.StatusBadRequest)
+
+		if bsd.pName == "" {
+			renderHome(w, r)
+			return
+		}
+
+		browseHandler(w, r)
 		return
 	}
 
@@ -209,7 +200,7 @@ func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, te
 	if err != nil {
 		logger.Errorf("Error trying to search for files under %q (in project %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
-		_500(w, "Error trying to search for folders.  Try again or contact support.")
+		_500(w, r, "Error trying to search for folders.  Try again or contact support.")
 		return
 	}
 
@@ -219,7 +210,7 @@ func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, te
 		tooManyFiles = true
 	}
 
-	err = search.Execute(w, vars{
+	search.Render(w, r, vars{
 		"Title":        fmt.Sprintf("Headlamp: File Search"),
 		"SearchTerm":   term,
 		"Project":      bsd.project,
@@ -229,9 +220,6 @@ func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, te
 		"MaxFiles":     maxFiles,
 		"TotalFiles":   totalFileCount,
 	})
-	if err != nil {
-		logger.Errorf("Unable to render search template: %s", err)
-	}
 }
 
 func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, term string) {
@@ -239,18 +227,15 @@ func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, 
 	if err != nil {
 		logger.Errorf("Error trying to search for folders under %q (in project %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
-		_500(w, "Error trying to search for folders.  Try again or contact support.")
+		_500(w, r, "Error trying to search for folders.  Try again or contact support.")
 		return
 	}
 
-	err = search.Execute(w, vars{
+	search.Render(w, r, vars{
 		"Title":            fmt.Sprintf("Headlamp: Folder Search"),
 		"FolderSearchTerm": term,
 		"Project":          bsd.project,
 		"Folder":           bsd.folder,
 		"Folders":          folders,
 	})
-	if err != nil {
-		logger.Errorf("Unable to render search template: %s", err)
-	}
 }
