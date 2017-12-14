@@ -8,7 +8,7 @@
 {{range .Folders}}
   <tr>
     {{if not $.Project}}<td><a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>{{end}}
-    <td><a href="{{BrowseFolderPath .}}">{{.Path | stripProjectFolder $.Folder}}</a></td>
+    <td><a href="{{BrowseFolderPath .}}">{{.PublicPath | stripProjectFolder $.Folder}}</a></td>
   </tr>
 {{end}}
 </table>

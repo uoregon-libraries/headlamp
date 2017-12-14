@@ -21,13 +21,13 @@ type Inventory struct {
 // collapsed folder structure for a project to allow easier browsing and/or
 // refining of searches
 type Folder struct {
-	ID        int      `sql:",primary"`
-	Project   *Project `sql:"-"`
-	Folder    *Folder  `sql:"-"`
-	ProjectID int
-	FolderID  int
-	Name      string
-	Path      string
+	ID         int      `sql:",primary"`
+	Project    *Project `sql:"-"`
+	Folder     *Folder  `sql:"-"`
+	ProjectID  int
+	FolderID   int
+	Name       string
+	PublicPath string
 }
 
 // File maps to the files database table, which represents the actual archived

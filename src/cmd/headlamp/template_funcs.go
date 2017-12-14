@@ -56,7 +56,7 @@ func stripProjectFolder(f *db.Folder, path string) string {
 	if f == nil {
 		return path
 	}
-	path = strings.TrimPrefix(path, sanitizePath(f.Path))
+	path = strings.TrimPrefix(path, sanitizePath(f.PublicPath))
 	path = strings.TrimPrefix(path, "/") // Just to make sure there's no starting slash
 	if path == "" {
 		path = "."
@@ -73,7 +73,7 @@ func pathify(project *db.Project, folder *db.Folder) string {
 	}
 	p = project.Name
 	if folder != nil {
-		p = path.Join(p, sanitizePath(folder.Path))
+		p = path.Join(p, sanitizePath(folder.PublicPath))
 	}
 
 	return p

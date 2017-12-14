@@ -52,11 +52,11 @@ func breadcrumbs(p *db.Project, f *db.Folder) template.HTML {
 	crumbs.add(p.Name, browseProjectPath(p))
 	var folderPathParts []string
 	if f != nil {
-		folderPathParts = strings.Split(f.Path, string(os.PathSeparator))
+		folderPathParts = strings.Split(f.PublicPath, string(os.PathSeparator))
 	}
 	var dummyFolder = &db.Folder{Project: p}
 	for _, part := range folderPathParts {
-		dummyFolder.Path = filepath.Join(dummyFolder.Path, part)
+		dummyFolder.PublicPath = filepath.Join(dummyFolder.PublicPath, part)
 		crumbs.add(part, browseFolderPath(dummyFolder))
 	}
 

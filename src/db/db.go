@@ -126,7 +126,7 @@ func (op *Operation) FindOrCreateProject(name string) (*Project, error) {
 // FindFolderByPath looks for a folder with the given path under the given project
 func (op *Operation) FindFolderByPath(p *Project, path string) (*Folder, error) {
 	var folder = &Folder{}
-	var ok = op.Folders.Select().Where("project_id = ? AND path = ?", p.ID, path).First(folder)
+	var ok = op.Folders.Select().Where("project_id = ? AND public_path = ?", p.ID, path).First(folder)
 	if !ok {
 		folder = nil
 	}
@@ -154,12 +154,12 @@ func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Fo
 
 	var _, filename = filepath.Split(path)
 	var newFolder = Folder{
-		Folder:    f,
-		FolderID:  parentFolderID,
-		Project:   p,
-		ProjectID: p.ID,
-		Path:      path,
-		Name:      filename,
+		Folder:     f,
+		FolderID:   parentFolderID,
+		Project:    p,
+		ProjectID:  p.ID,
+		PublicPath: path,
+		Name:       filename,
 	}
 	op.Folders.Save(&newFolder)
 	return &newFolder, op.Operation.Err()
@@ -223,7 +223,7 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 	}
 	if folder != nil {
 		wherePieces = append(wherePieces, "public_path like ?")
-		whereArgs = append(whereArgs, folder.Path+"/%")
+		whereArgs = append(whereArgs, folder.PublicPath+"/%")
 	}
 
 	var sel = op.Files.Select()
@@ -272,14 +272,14 @@ func (op *Operation) SearchFolders(project *Project, folder *Folder, term string
 		whereArgs = append(whereArgs, project.ID)
 	}
 	if folder != nil {
-		wherePieces = append(wherePieces, "path like ?")
-		whereArgs = append(whereArgs, folder.Path+"/%")
+		wherePieces = append(wherePieces, "public_path like ?")
+		whereArgs = append(whereArgs, folder.PublicPath+"/%")
 	}
 
 	var folders []*Folder
 	op.Folders.Select().
 		Where(strings.Join(wherePieces, " AND "), whereArgs...).
-		Order("LOWER(path)").
+		Order("LOWER(public_path)").
 		AllObjects(&folders)
 
 	// If project is blank, pull project from db

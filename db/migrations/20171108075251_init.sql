@@ -28,12 +28,12 @@ CREATE TABLE folders (
 
   -- This is the "public" path we expose to users for searching; it collapses
   -- things like project directory, volume directories, date dir, etc.
-  path text not null
+  public_path text not null
 );
 
-CREATE INDEX folders_path ON folders (path);
+CREATE INDEX folders_public_path ON folders (public_path);
 CREATE INDEX folders_folder_id ON folders (folder_id);
-CREATE UNIQUE INDEX folders_unique ON folders (project_id, path);
+CREATE UNIQUE INDEX folders_unique ON folders (project_id, public_path);
 
 CREATE TABLE files (
   id integer not null primary key,
