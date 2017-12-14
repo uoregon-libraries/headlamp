@@ -17,6 +17,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"BrowseContainingFolderPath": browseContainingFolderPath,
 	"ViewFilePath":               viewFilePath,
 	"DownloadFilePath":           downloadFilePath,
+	"Pathify":                    pathify,
 	"stripProjectFolder":         stripProjectFolder,
 }
 
@@ -33,7 +34,7 @@ func browseProjectPath(project *db.Project) string {
 }
 
 func browseFolderPath(folder *db.Folder) string {
-	return fmt.Sprintf("/browse/%s/%s", folder.Project.Name, sanitizePath(folder.Path))
+	return fmt.Sprintf("/browse/%s", pathify(folder.Project, folder))
 }
 
 func browseContainingFolderPath(file *db.File) string {
@@ -61,4 +62,19 @@ func stripProjectFolder(f *db.Folder, path string) string {
 		path = "."
 	}
 	return path
+}
+
+// pathify combines the project and folder to create a slash-delimited string
+func pathify(project *db.Project, folder *db.Folder) string {
+	var p string
+
+	if project == nil {
+		return p
+	}
+	p = project.Name
+	if folder != nil {
+		p = path.Join(p, sanitizePath(folder.Path))
+	}
+
+	return p
 }

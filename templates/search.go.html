@@ -14,7 +14,7 @@
   Folders matching "{{.FolderSearchTerm}}"
   {{end}}
   {{if .Project}}
-    under {{.Project.Name}}{{if .Folder}}/{{.Folder.Path}}{{end}}
+    under {{Pathify .Project .Folder}}
   {{end}}
 </p>
 
