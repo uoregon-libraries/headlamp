@@ -26,6 +26,7 @@ type Folder struct {
 	Folder     *Folder  `sql:"-"`
 	ProjectID  int
 	FolderID   int
+	Depth      int
 	Name       string
 	PublicPath string
 }
@@ -40,6 +41,7 @@ type File struct {
 	ProjectID   int
 	InventoryID int
 	FolderID    int
+	Depth       int
 	ArchiveDate string
 	Checksum    string
 	Filesize    int64

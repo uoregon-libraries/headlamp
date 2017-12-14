@@ -22,6 +22,7 @@ CREATE TABLE folders (
   id integer not null primary key,
   project_id integer not null,
   folder_id integer not null,
+  depth integer not null,
 
   -- This is the name of the folder for easier display
   name text not null,
@@ -33,6 +34,7 @@ CREATE TABLE folders (
 
 CREATE INDEX folders_public_path ON folders (public_path);
 CREATE INDEX folders_folder_id ON folders (folder_id);
+CREATE INDEX folders_depth ON folders (depth);
 CREATE UNIQUE INDEX folders_unique ON folders (project_id, public_path);
 
 CREATE TABLE files (
@@ -40,6 +42,7 @@ CREATE TABLE files (
   project_id integer not null,
   inventory_id integer not null,
   folder_id integer not null,
+  depth integer not null,
   archive_date text not null,
 
   -- Data integrity info
@@ -62,6 +65,7 @@ CREATE INDEX files_public_path ON files (public_path);
 CREATE INDEX files_project_id ON files (project_id);
 CREATE INDEX files_folder_id ON files (folder_id);
 CREATE INDEX files_inventory_id ON files (inventory_id);
+CREATE INDEX files_depth ON files (depth);
 CREATE UNIQUE INDEX files_unique ON files (project_id, archive_date, public_path);
 
 -- +goose Down

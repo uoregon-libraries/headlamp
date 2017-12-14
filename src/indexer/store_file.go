@@ -68,6 +68,7 @@ func (p *project) buildFile(i *db.Inventory, f *db.Folder, r fileRecord) *db.Fil
 		InventoryID: i.ID,
 		Folder:      f,
 		FolderID:    fid,
+		Depth:       strings.Count(r.publicPath, string(os.PathSeparator)),
 		ArchiveDate: r.archiveDate,
 		Checksum:    r.checksum,
 		Filesize:    r.filesize,

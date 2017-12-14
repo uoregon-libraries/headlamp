@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -158,6 +159,7 @@ func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Fo
 		FolderID:   parentFolderID,
 		Project:    p,
 		ProjectID:  p.ID,
+		Depth:      strings.Count(path, string(os.PathSeparator)),
 		PublicPath: path,
 		Name:       filename,
 	}
@@ -237,7 +239,7 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 
 	var sel = op.Files.Select()
 	sel = sel.Where(strings.Join(wherePieces, " AND "), whereArgs...)
-	sel = sel.Order("LOWER(public_path)")
+	sel = sel.Order("depth, LOWER(public_path)")
 
 	var count = sel.Count().RowCount()
 	var files []*File
@@ -280,7 +282,7 @@ func (op *Operation) SearchFolders(project *Project, folder *Folder, term string
 	var folders []*Folder
 	op.Folders.Select().
 		Where(strings.Join(wherePieces, " AND "), whereArgs...).
-		Order("LOWER(public_path)").
+		Order("depth, LOWER(public_path)").
 		AllObjects(&folders)
 
 	// If project is blank, pull project from db
