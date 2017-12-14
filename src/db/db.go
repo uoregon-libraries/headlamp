@@ -223,7 +223,7 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 	}
 	if folder != nil {
 		wherePieces = append(wherePieces, "public_path like ?")
-		whereArgs = append(whereArgs, folder.Path+"%")
+		whereArgs = append(whereArgs, folder.Path+"/%")
 	}
 
 	var sel = op.Files.Select()
@@ -273,7 +273,7 @@ func (op *Operation) SearchFolders(project *Project, folder *Folder, term string
 	}
 	if folder != nil {
 		wherePieces = append(wherePieces, "path like ?")
-		whereArgs = append(whereArgs, folder.Path+"%")
+		whereArgs = append(whereArgs, folder.Path+"/%")
 	}
 
 	var folders []*Folder
