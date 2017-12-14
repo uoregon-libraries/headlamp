@@ -206,17 +206,11 @@ func (op *Operation) GetFiles(project *Project, folder *Folder, limit uint64) ([
 	return files, count, op.Operation.Err()
 }
 
-// SearchFiles finds all files which are *descendents* of the given
-// project/folder and match the term
-//
-// Note that folder data is *not* filled in on the returns files.  Pulling
-// folders from the database is unnecessary since all folder lookups are via
-// path, so this reduces the amount of information we pull from the database
-// and simplifies the code quite a bit.
-func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, limit uint64) ([]*File, uint64, error) {
-	var wherePieces = []string{"public_path LIKE ?"}
-	var whereArgs = []interface{}{term}
-
+// commonSearchWhere sets up the SQL "WHERE" string and arg slices common to
+// searches for files or folders
+func (op *Operation) commonSearchSelect(project *Project, folder *Folder) ([]string, []interface{}) {
+	var wherePieces []string
+	var whereArgs []interface{}
 	if project != nil {
 		wherePieces = append(wherePieces, "project_id = ?")
 		whereArgs = append(whereArgs, project.ID)
@@ -225,6 +219,21 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 		wherePieces = append(wherePieces, "public_path like ?")
 		whereArgs = append(whereArgs, folder.PublicPath+"/%")
 	}
+
+	return wherePieces, whereArgs
+}
+
+// SearchFiles finds all files which are *descendents* of the given
+// project/folder and match the term
+//
+// Note that folder data is *not* filled in on the returns files.  Pulling
+// folders from the database is unnecessary since all folder lookups are via
+// path, so this reduces the amount of information we pull from the database
+// and simplifies the code quite a bit.
+func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, limit uint64) ([]*File, uint64, error) {
+	var wherePieces, whereArgs = op.commonSearchSelect(project, folder)
+	wherePieces = append(wherePieces, "public_path LIKE ?")
+	whereArgs = append(whereArgs, term)
 
 	var sel = op.Files.Select()
 	sel = sel.Where(strings.Join(wherePieces, " AND "), whereArgs...)
@@ -264,17 +273,9 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 // are via path, so this reduces the amount of information we pull from the
 // database and simplifies the code quite a bit.
 func (op *Operation) SearchFolders(project *Project, folder *Folder, term string) ([]*Folder, error) {
-	var wherePieces = []string{"name LIKE ?"}
-	var whereArgs = []interface{}{term}
-
-	if project != nil {
-		wherePieces = append(wherePieces, "project_id = ?")
-		whereArgs = append(whereArgs, project.ID)
-	}
-	if folder != nil {
-		wherePieces = append(wherePieces, "public_path like ?")
-		whereArgs = append(whereArgs, folder.PublicPath+"/%")
-	}
+	var wherePieces, whereArgs = op.commonSearchSelect(project, folder)
+	wherePieces = append(wherePieces, "name LIKE ?")
+	whereArgs = append(whereArgs, term)
 
 	var folders []*Folder
 	op.Folders.Select().
