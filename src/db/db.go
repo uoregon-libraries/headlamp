@@ -170,59 +170,19 @@ func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Fo
 // GetFolders returns all folders with the given project and parent folder.  A
 // parent folder of nil can be used to pull all top-level folders.
 func (op *Operation) GetFolders(project *Project, folder *Folder) ([]*Folder, error) {
+	var sel = op.FolderSelect(project, folder)
 	var folders []*Folder
-	var fid int
-	if folder != nil {
-		fid = folder.ID
-	}
-	op.Folders.Select().
-		Where("project_id = ? AND folder_id = ?", project.ID, fid).
-		Order("LOWER(name)").
-		AllObjects(&folders)
-
-	for _, f := range folders {
-		f.Folder = folder
-		f.Project = project
-	}
-	return folders, op.Operation.Err()
+	var _, err = sel.AllObjects(&folders)
+	return folders, err
 }
 
 // GetFiles returns all files with the given project and parent folder.  A
 // parent folder of nil can be used to pull all top-level files.
 func (op *Operation) GetFiles(project *Project, folder *Folder, limit uint64) ([]*File, uint64, error) {
+	var sel = op.FileSelect(project, folder).Limit(limit)
 	var files []*File
-	var fid int
-	if folder != nil {
-		fid = folder.ID
-	}
-	var sel = op.Files.Select().
-		Where("project_id = ? AND folder_id = ?", project.ID, fid).
-		Order("LOWER(name)")
-
-	var count = sel.Count().RowCount()
-	sel.Limit(limit).AllObjects(&files)
-	for _, f := range files {
-		f.Folder = folder
-		f.Project = project
-	}
-	return files, count, op.Operation.Err()
-}
-
-// commonSearchWhere sets up the SQL "WHERE" string and arg slices common to
-// searches for files or folders
-func (op *Operation) commonSearchSelect(project *Project, folder *Folder) ([]string, []interface{}) {
-	var wherePieces []string
-	var whereArgs []interface{}
-	if project != nil {
-		wherePieces = append(wherePieces, "project_id = ?")
-		whereArgs = append(whereArgs, project.ID)
-	}
-	if folder != nil {
-		wherePieces = append(wherePieces, "public_path like ?")
-		whereArgs = append(whereArgs, folder.PublicPath+"/%")
-	}
-
-	return wherePieces, whereArgs
+	var count, err = sel.AllObjects(&files)
+	return files, count, err
 }
 
 // SearchFiles finds all files which are *descendents* of the given
@@ -233,38 +193,10 @@ func (op *Operation) commonSearchSelect(project *Project, folder *Folder) ([]str
 // path, so this reduces the amount of information we pull from the database
 // and simplifies the code quite a bit.
 func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, limit uint64) ([]*File, uint64, error) {
-	var wherePieces, whereArgs = op.commonSearchSelect(project, folder)
-	wherePieces = append(wherePieces, "public_path LIKE ?")
-	whereArgs = append(whereArgs, term)
-
-	var sel = op.Files.Select()
-	sel = sel.Where(strings.Join(wherePieces, " AND "), whereArgs...)
-	sel = sel.Order("depth, LOWER(public_path)")
-
-	var count = sel.Count().RowCount()
+	var sel = op.FileSelect(project, folder).TreeMode(true).Search("public_path LIKE ?", term).Limit(limit)
 	var files []*File
-	sel.Limit(limit).AllObjects(&files)
-
-	// If project is blank, pull project from db
-	if project == nil {
-		var projectLookup = make(map[int]*Project)
-		var projectList, err = op.AllProjects()
-		if err != nil {
-			return nil, 0, err
-		}
-		for _, p := range projectList {
-			projectLookup[p.ID] = p
-		}
-		for _, f := range files {
-			f.Project = projectLookup[f.ProjectID]
-		}
-	} else {
-		for _, f := range files {
-			f.Project = project
-		}
-	}
-
-	return files, count, op.Operation.Err()
+	var count, err = sel.AllObjects(&files)
+	return files, count, err
 }
 
 // SearchFolders finds all folders which are *descendents* of the given
@@ -275,36 +207,10 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 // are via path, so this reduces the amount of information we pull from the
 // database and simplifies the code quite a bit.
 func (op *Operation) SearchFolders(project *Project, folder *Folder, term string) ([]*Folder, error) {
-	var wherePieces, whereArgs = op.commonSearchSelect(project, folder)
-	wherePieces = append(wherePieces, "name LIKE ?")
-	whereArgs = append(whereArgs, term)
-
+	var sel = op.FolderSelect(project, folder).TreeMode(true).Search("name LIKE ?", term)
 	var folders []*Folder
-	op.Folders.Select().
-		Where(strings.Join(wherePieces, " AND "), whereArgs...).
-		Order("depth, LOWER(public_path)").
-		AllObjects(&folders)
-
-	// If project is blank, pull project from db
-	if project == nil {
-		var projectLookup = make(map[int]*Project)
-		var projectList, err = op.AllProjects()
-		if err != nil {
-			return nil, err
-		}
-		for _, p := range projectList {
-			projectLookup[p.ID] = p
-		}
-		for _, f := range folders {
-			f.Project = projectLookup[f.ProjectID]
-		}
-	} else {
-		for _, f := range folders {
-			f.Project = project
-		}
-	}
-
-	return folders, op.Operation.Err()
+	var _, err = sel.AllObjects(&folders)
+	return folders, err
 }
 
 // FindFileByID returns the file found by the given ID, or nil if none if
