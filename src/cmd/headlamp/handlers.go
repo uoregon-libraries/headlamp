@@ -48,9 +48,10 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	var parts = getPathParts(r)
 	if len(parts) == 0 || len(parts) == 1 && parts[0] == "" {
 		renderHome(w, r)
+		return
 	}
+
 	_404(w, r, "Unable to find the requested resource")
-	return
 }
 
 func renderHome(w http.ResponseWriter, r *http.Request) {
