@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/uoregon-libraries/gopkg/fileutil"
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -24,7 +23,7 @@ func getFile(w http.ResponseWriter, r *http.Request) *os.File {
 	var err error
 	var op = dbh.Operation()
 
-	var parts = strings.Split(r.URL.Path, "/")
+	var parts = getPathParts(r)
 	var idString = parts[len(parts)-1]
 	fileID, err = strconv.ParseUint(idString, 10, 64)
 	if err != nil {

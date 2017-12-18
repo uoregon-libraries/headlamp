@@ -34,8 +34,19 @@ func initTemplates(webroot string) {
 
 type vars map[string]interface{}
 
+// getPathParts filters the basePath out of the URL and then returns the actual
+// app path elements
+func getPathParts(r *http.Request) []string {
+	var rawPath = r.URL.Path
+	var trimmed = strings.TrimPrefix(rawPath, basePath)
+	// Make sure there is no preceding slash
+	trimmed = strings.TrimPrefix(rawPath, "/")
+	return strings.Split(trimmed, "/")
+}
+
 func homeHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.String() != "/" {
+	var parts = getPathParts(r)
+	if len(parts) != 0 {
 		_404(w, r, "Unable to find the requested resource")
 		return
 	}
@@ -71,7 +82,7 @@ type browseSearchData struct {
 func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchData {
 	var bsd browseSearchData
 	var bsde = browseSearchData{hadError: true}
-	var parts = strings.Split(r.URL.Path, "/")
+	var parts = getPathParts(r)
 
 	// We're doing a lot, so let's grab a single operation for all this lovely work
 	bsd.op = dbh.Operation()

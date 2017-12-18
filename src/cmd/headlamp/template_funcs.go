@@ -2,9 +2,9 @@ package main
 
 import (
 	"db"
-	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/uoregon-libraries/gopkg/tmpl"
@@ -28,25 +28,31 @@ func sanitizePath(p string) string {
 	return path.Join(strings.Split(p, string(os.PathSeparator))...)
 }
 
+// joinPaths combines the app's base path with the parts passed in
+func joinPaths(parts ...string) string {
+	parts = append([]string{basePath}, parts...)
+	return path.Join(parts...)
+}
+
 // browseProjectPath produces the URL to browse the given project's top-level folder
 func browseProjectPath(project *db.Project) string {
-	return fmt.Sprintf("/browse/%s", project.Name)
+	return joinPaths("browse", project.Name)
 }
 
 func browseFolderPath(folder *db.Folder) string {
-	return fmt.Sprintf("/browse/%s", pathify(folder.Project, folder))
+	return joinPaths("browse", pathify(folder.Project, folder))
 }
 
 func browseContainingFolderPath(file *db.File) string {
-	return fmt.Sprintf("/browse/%s/%s", file.Project.Name, sanitizePath(file.ContainingFolder()))
+	return joinPaths("browse", file.Project.Name, sanitizePath(file.ContainingFolder()))
 }
 
 func viewFilePath(file *db.File) string {
-	return fmt.Sprintf("/view/%d", file.ID)
+	return joinPaths("view", strconv.Itoa(file.ID))
 }
 
 func downloadFilePath(file *db.File) string {
-	return fmt.Sprintf("/download/%d", file.ID)
+	return joinPaths("download", strconv.Itoa(file.ID))
 }
 
 // stripProjectFolder takes a string representing a path, and strips out the

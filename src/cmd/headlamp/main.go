@@ -18,10 +18,11 @@ import (
 
 // dbh is our global database handle for DA searches
 var dbh = db.New()
-var baseURL, bind, daRoot string
+var basePath, bind, daRoot string
 var sessionManager *scs.Manager
 
 func main() {
+	var baseURL string
 	baseURL, bind, daRoot = getCLI()
 
 	var s = startServer(baseURL, bind)
@@ -43,7 +44,8 @@ func startServer(baseURL, bind string) *http.Server {
 		logger.Fatalf("Unable to parse base URL %q: %s", baseURL, err)
 	}
 
-	var basePath = strings.TrimRight(u.Path, "/")
+	basePath = strings.TrimRight(u.Path, "/")
+	logger.Debugf("Serving root from %q", basePath)
 	mux.HandleFunc(basePath+"/", homeHandler)
 	mux.HandleFunc(basePath+"/browse/", browseHandler)
 	mux.HandleFunc(basePath+"/search/", searchHandler)
