@@ -46,7 +46,6 @@ func getPathParts(r *http.Request) []string {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	var parts = getPathParts(r)
-	logger.Debugf("Home handler: %q %q", r.URL, parts)
 	if len(parts) == 0 || len(parts) == 1 && parts[0] == "" {
 		renderHome(w, r)
 	}
