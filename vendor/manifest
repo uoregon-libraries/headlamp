@@ -8,22 +8,17 @@
 			"branch": "HEAD"
 		},
 		{
-			"importpath": "github.com/gorilla/context",
-			"repository": "https://github.com/gorilla/context",
-			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"importpath": "github.com/alexedwards/scs",
+			"repository": "https://github.com/alexedwards/scs",
+			"revision": "876a0fdbdd8ce6c328b2e8064a7483ff377ddaa4",
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/gorilla/securecookie",
-			"repository": "https://github.com/gorilla/securecookie",
-			"revision": "e59506cc896acb7f7bf732d4fdf5e25f7ccd8983",
-			"branch": "master"
-		},
-		{
-			"importpath": "github.com/gorilla/sessions",
-			"repository": "https://github.com/gorilla/sessions",
-			"revision": "a3acf13e802c358d65f249324d14ed24aac11370",
-			"branch": "master"
+			"importpath": "github.com/alexedwards/scs/stores/memstore",
+			"repository": "https://github.com/alexedwards/scs",
+			"revision": "876a0fdbdd8ce6c328b2e8064a7483ff377ddaa4",
+			"branch": "master",
+			"path": "/stores/memstore"
 		},
 		{
 			"importpath": "github.com/mattn/go-sqlite3",
@@ -32,10 +27,37 @@
 			"branch": "HEAD"
 		},
 		{
+			"importpath": "github.com/patrickmn/go-cache",
+			"repository": "https://github.com/patrickmn/go-cache",
+			"revision": "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/uoregon-libraries/gopkg",
 			"repository": "https://github.com/uoregon-libraries/gopkg",
 			"revision": "870b8ffd3256fbc67d4b6bd57f7f6e126c98e8d4",
 			"branch": "master"
+		},
+		{
+			"importpath": "golang.org/x/crypto/nacl/secretbox",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "244f6ce1f09cc9f3d7bffe29b033aaa13c0cc2f3",
+			"branch": "master",
+			"path": "/nacl/secretbox"
+		},
+		{
+			"importpath": "golang.org/x/crypto/poly1305",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "244f6ce1f09cc9f3d7bffe29b033aaa13c0cc2f3",
+			"branch": "master",
+			"path": "/poly1305"
+		},
+		{
+			"importpath": "golang.org/x/crypto/salsa20/salsa",
+			"repository": "https://go.googlesource.com/crypto",
+			"revision": "244f6ce1f09cc9f3d7bffe29b033aaa13c0cc2f3",
+			"branch": "master",
+			"path": "/salsa20/salsa"
 		},
 		{
 			"importpath": "golang.org/x/net/context",

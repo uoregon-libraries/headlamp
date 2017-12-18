@@ -10,7 +10,8 @@ import (
 	"strings"
 	"time"
 
-	gcontext "github.com/gorilla/context"
+	"github.com/alexedwards/scs"
+	"github.com/alexedwards/scs/stores/memstore"
 	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
 )
@@ -18,6 +19,7 @@ import (
 // dbh is our global database handle for DA searches
 var dbh = db.New()
 var baseURL, bind, daRoot string
+var sessionManager *scs.Manager
 
 func main() {
 	baseURL, bind, daRoot = getCLI()
@@ -57,7 +59,14 @@ func startServer(baseURL, bind string) *http.Server {
 		basePath = "/"
 	}
 	initTemplates(basePath)
-	var server = &http.Server{Addr: bind, Handler: gcontext.ClearHandler(mux)}
+
+	// Set up the in-memory session store
+	var store = memstore.New(time.Hour * 24)
+	sessionManager = scs.NewManager(store)
+	sessionManager.Lifetime(time.Hour * 24)
+	sessionManager.Secure(true)
+
+	var server = &http.Server{Addr: bind, Handler: sessionManager.Use(mux)}
 
 	go func() {
 		logger.Infof("Listening for HTTP connections")

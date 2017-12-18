@@ -13,17 +13,11 @@ type Template struct {
 }
 
 // Render executes this template, logging errors and automagically pulling
-// alert/info data from the session
+// alert/info data from the session if available
 func (t *Template) Render(w http.ResponseWriter, r *http.Request, data vars) {
-	var s = getSession(w, r)
-	if s == nil {
-		return
-	}
-	data["Alert"] = s.Values["Alert"]
-	s.Values["Alert"] = ""
-	data["Info"] = s.Values["Info"]
-	s.Values["Info"] = ""
-	s.Save(r, w)
+	var s = sessionManager.Load(r)
+	data["Alert"], _ = s.PopString(w, "Alert")
+	data["Info"], _ = s.PopString(w, "Info")
 
 	var err = t.Execute(w, data)
 	if err != nil {
