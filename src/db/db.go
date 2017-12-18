@@ -206,11 +206,11 @@ func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, 
 // Pulling folders from the database is unnecessary since all folder lookups
 // are via path, so this reduces the amount of information we pull from the
 // database and simplifies the code quite a bit.
-func (op *Operation) SearchFolders(project *Project, folder *Folder, term string) ([]*Folder, error) {
-	var sel = op.FolderSelect(project, folder).TreeMode(true).Search("name LIKE ?", term)
+func (op *Operation) SearchFolders(project *Project, folder *Folder, term string, limit uint64) ([]*Folder, uint64, error) {
+	var sel = op.FolderSelect(project, folder).TreeMode(true).Search("name LIKE ?", term).Limit(limit)
 	var folders []*Folder
-	var _, err = sel.AllObjects(&folders)
-	return folders, err
+	var count, err = sel.AllObjects(&folders)
+	return folders, count, err
 }
 
 // FindFileByID returns the file found by the given ID, or nil if none if

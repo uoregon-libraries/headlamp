@@ -48,6 +48,13 @@
 {{define "foldersAndFiles"}}
 {{if .Folders}}
 <h2>Folders</h2>
+{{if .TooManyFolders}}
+<p class="alert alert-warning">
+  There are too many folders to display.  Showing the top {{.MaxFolders}} out
+  of {{.TotalFolders}}; try searching (or refining your search) for something
+  more unique.
+</p>
+{{end}} <!-- if .TooManyFolders -->
 {{template "foldersTable" .}}
 {{end}}
 

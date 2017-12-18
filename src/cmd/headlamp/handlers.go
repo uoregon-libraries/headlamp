@@ -223,12 +223,18 @@ func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, te
 }
 
 func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, term string) {
-	var folders, err = bsd.op.SearchFolders(bsd.project, bsd.folder, term)
+	var folders, totalFolderCount, err = bsd.op.SearchFolders(bsd.project, bsd.folder, term, maxFiles+1)
 	if err != nil {
 		logger.Errorf("Error trying to search for folders under %q (in project %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
 		_500(w, r, "Error trying to search for folders.  Try again or contact support.")
 		return
+	}
+
+	var tooManyFolders = false
+	if len(folders) > maxFiles {
+		folders = folders[:maxFiles]
+		tooManyFolders = true
 	}
 
 	search.Render(w, r, vars{
@@ -237,5 +243,8 @@ func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, 
 		"Project":          bsd.project,
 		"Folder":           bsd.folder,
 		"Folders":          folders,
+		"TooManyFolders":   tooManyFolders,
+		"MaxFolders":       maxFiles,
+		"TotalFolders":     totalFolderCount,
 	})
 }
