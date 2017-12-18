@@ -36,7 +36,7 @@ func usage(msg string) {
 	perrf("Usage: %s <bind address> <webpath> <dark archive path>", os.Args[0])
 	perr("")
 	perr("Example:")
-	perrraw(fmt.Sprintf(`    %s ":8080" "https://foo.bar/subfoo"`, os.Args[0]))
+	perrraw(fmt.Sprintf(`    %s ":8080" "https://foo.bar/subfoo" /mnt/darkarchive/`, os.Args[0]))
 
 	os.Exit(status)
 }
