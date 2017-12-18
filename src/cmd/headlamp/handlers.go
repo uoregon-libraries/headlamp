@@ -40,7 +40,7 @@ func getPathParts(r *http.Request) []string {
 	var rawPath = r.URL.Path
 	var trimmed = strings.TrimPrefix(rawPath, basePath)
 	// Make sure there is no preceding slash
-	trimmed = strings.TrimPrefix(rawPath, "/")
+	trimmed = strings.TrimPrefix(trimmed, "/")
 	return strings.Split(trimmed, "/")
 }
 
