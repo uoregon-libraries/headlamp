@@ -12,6 +12,7 @@ import (
 
 var localTemplateFuncs = tmpl.FuncMap{
 	"BreadCrumbs":                breadcrumbs,
+	"SearchPath":                 searchPath,
 	"BrowseProjectPath":          browseProjectPath,
 	"BrowseFolderPath":           browseFolderPath,
 	"BrowseContainingFolderPath": browseContainingFolderPath,
@@ -32,6 +33,15 @@ func sanitizePath(p string) string {
 func joinPaths(parts ...string) string {
 	parts = append([]string{basePath}, parts...)
 	return path.Join(parts...)
+}
+
+func searchPath(project *db.Project, folder *db.Folder) string {
+	// We only handle "search/" and beyond, so if there's no project context, we
+	// have to force the trailing slash
+	if project == nil {
+		return joinPaths("search") + "/"
+	}
+	return joinPaths("search", pathify(project, folder))
 }
 
 // browseProjectPath produces the URL to browse the given project's top-level folder

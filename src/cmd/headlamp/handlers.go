@@ -46,12 +46,12 @@ func getPathParts(r *http.Request) []string {
 
 func homeHandler(w http.ResponseWriter, r *http.Request) {
 	var parts = getPathParts(r)
-	if len(parts) != 0 {
-		_404(w, r, "Unable to find the requested resource")
-		return
+	logger.Debugf("Home handler: %q %q", r.URL, parts)
+	if len(parts) == 0 || len(parts) == 1 && parts[0] == "" {
+		renderHome(w, r)
 	}
-
-	renderHome(w, r)
+	_404(w, r, "Unable to find the requested resource")
+	return
 }
 
 func renderHome(w http.ResponseWriter, r *http.Request) {
@@ -87,19 +87,12 @@ func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchDat
 	// We're doing a lot, so let's grab a single operation for all this lovely work
 	bsd.op = dbh.Operation()
 
-	// This shouldn't happen unless we screw something up elsewhere in the code
-	if len(parts) < 1 || parts[1] == "" {
-		_400(w, r, "Invalid request")
-		logger.Debugf("invalid request")
-		return bsde
-	}
-
 	if len(parts) < 2 {
 		return bsd
 	}
 
-	bsd.pName = parts[2]
-	bsd.folderPath = filepath.Join(parts[3:]...)
+	bsd.pName = parts[1]
+	bsd.folderPath = filepath.Join(parts[2:]...)
 
 	// This is acceptable in some situations, so we don't want to explode due to
 	// missing project

@@ -1,5 +1,5 @@
 {{define "searchForm"}}
-<form action="{{Webroot}}/search/{{Pathify .Project .Folder}}" method="GET">
+<form action="{{SearchPath .Project .Folder}}" method="GET">
   <label>
   Find Files
   <input type="text" name="q" value="{{.SearchTerm}}" aria-describedby="search-hint" />
@@ -13,7 +13,7 @@
   </p>
 </form>
 
-<form action="{{Webroot}}/search/{{Pathify .Project .Folder}}" method="GET">
+<form action="{{SearchPath .Project .Folder}}" method="GET">
   <label>
   Find Folders
   <input type="text" name="fq" value="{{.FolderSearchTerm}}" aria-describedby="search-hint" />
