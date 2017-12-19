@@ -34,7 +34,7 @@ type Folder struct {
 // File maps to the files database table, which represents the actual archived
 // files described by the inventory files
 type File struct {
-	ID          int        `sql:",primary"`
+	ID          uint64     `sql:",primary"`
 	Project     *Project   `sql:"-"`
 	Inventory   *Inventory `sql:"-"`
 	Folder      *Folder    `sql:"-"`

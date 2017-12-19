@@ -58,11 +58,11 @@ func browseContainingFolderPath(file *db.File) string {
 }
 
 func viewFilePath(file *db.File) string {
-	return joinPaths("view", strconv.Itoa(file.ID))
+	return joinPaths("view", strconv.FormatUint(file.ID, 10))
 }
 
 func downloadFilePath(file *db.File) string {
-	return joinPaths("download", strconv.Itoa(file.ID))
+	return joinPaths("download", strconv.FormatUint(file.ID, 10))
 }
 
 // stripProjectFolder takes a string representing a path, and strips out the
