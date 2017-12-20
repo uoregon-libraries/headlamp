@@ -4,7 +4,7 @@
 
 {{if .Files}}
 <p>Your current queue consists of a total of {{len .Files}} files:</p>
-{{template "filesTable" .}}
+{{template "bulkFilesTable" .}}
 
 {{else}} <!-- if .Files -->
 <p>Your current queue is empty!  Browse and/or search to queue up files for bulk download.</p>
