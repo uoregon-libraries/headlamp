@@ -68,3 +68,28 @@ func bulkQueueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 }
+
+func bulkDownloadHandler(w http.ResponseWriter, r *http.Request) {
+	// Grab the session data that holds our queue
+	var s = sessionManager.Load(r)
+	var q = NewBulkFileQueue()
+	var err = s.GetObject("Queue", q)
+	if err != nil {
+		logger.Errorf("Unable to load user's bulk file queue: %s", err)
+		_500(w, r, "Unable to load your bulk download queue.  Try again or contact support.")
+		return
+	}
+
+	var files []*db.File
+	files, err = q.Files()
+	if err != nil {
+		logger.Errorf("Unable to load files from the database: %s", err)
+		_500(w, r, "Unable to load your bulk download queue.  Try again or contact support.")
+		return
+	}
+
+	bulk.Render(w, r, vars{
+		"Title": "Headlamp: Bulk Download",
+		"Files": files,
+	})
+}

@@ -17,7 +17,7 @@ import (
 const maxFiles = 1000
 
 var root *tmpl.TRoot
-var home, browse, search, empty *Template
+var home, browse, search, bulk, empty *Template
 
 func initTemplates(webroot string) {
 	webutil.Webroot = webroot
@@ -29,6 +29,7 @@ func initTemplates(webroot string) {
 	home = &Template{root.Clone().MustBuild("home.go.html")}
 	browse = &Template{root.Clone().MustBuild("browse.go.html")}
 	search = &Template{root.Clone().MustBuild("search.go.html")}
+	bulk = &Template{root.Clone().MustBuild("bulk.go.html")}
 	empty = &Template{root.Template()}
 }
 

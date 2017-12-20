@@ -30,3 +30,13 @@ func (q *BulkFileQueue) AddFile(f *db.File) {
 func (q *BulkFileQueue) RemoveFile(f *db.File) {
 	delete(q.FileIDs, f.ID)
 }
+
+// Files attempts to load all db.File instances from the database and return
+// them.  If a queue is huge, this could of course take a very long time.
+func (q *BulkFileQueue) Files() ([]*db.File, error) {
+	var ids []uint64
+	for k := range q.FileIDs {
+		ids = append(ids, k)
+	}
+	return dbh.Operation().GetFilesByIDs(ids)
+}

@@ -52,6 +52,7 @@ func startServer(baseURL, bind string) *http.Server {
 	mux.HandleFunc(basePath+"/view/", viewFileHandler)
 	mux.HandleFunc(basePath+"/download/", downloadFileHandler)
 	mux.HandleFunc(basePath+"/bulk/", bulkQueueHandler)
+	mux.HandleFunc(basePath+"/bulk-download/", bulkDownloadHandler)
 
 	var staticPath = filepath.Join(filepath.Dir(os.Args[2]), "static")
 	var fileServer = http.FileServer(http.Dir(staticPath))

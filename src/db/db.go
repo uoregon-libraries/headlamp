@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/Nerdmaster/magicsql"
@@ -241,4 +242,43 @@ func (op *Operation) PopulateProjects(files []*File, folders []*Folder) error {
 		f.Project = projectLookup[f.ProjectID]
 	}
 	return nil
+}
+
+func (op *Operation) appendFiles(files []*File, ids []uint64) []*File {
+	var where = "id IN (" + strings.Repeat("?, ", len(ids)-1) + "?)"
+	var args []interface{}
+	for _, id := range ids {
+		args = append(args, id)
+	}
+	var tempFiles []*File
+	op.Files.Select().Where(where, args...).AllObjects(&tempFiles)
+	return append(files, tempFiles...)
+}
+
+// GetFilesByIDs returns a list of File instances for the given ids
+func (op *Operation) GetFilesByIDs(ids []uint64) ([]*File, error) {
+	var files []*File
+
+	// split ids into chunks that can work in an IN query - I can't find any
+	// details on what a real limit might be, so we just split at 1000 and hope
+	// for the best
+	for len(ids) > 1000 {
+		files = op.appendFiles(files, ids[:1000])
+		ids = ids[1000:]
+	}
+	if len(ids) > 0 {
+		files = op.appendFiles(files, ids)
+	}
+
+	// We have to sort after the fact since we don't know how many passes it took
+	// to get the data
+	sort.Slice(files, func(i, j int) bool {
+		if files[i].Depth != files[j].Depth {
+			return files[i].Depth < files[j].Depth
+		}
+		return strings.ToLower(files[i].PublicPath) < strings.ToLower(files[j].PublicPath)
+	})
+
+	op.PopulateProjects(files, nil)
+	return files, op.Operation.Err()
 }
