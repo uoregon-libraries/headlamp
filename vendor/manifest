@@ -4,8 +4,8 @@
 		{
 			"importpath": "github.com/Nerdmaster/magicsql",
 			"repository": "https://github.com/Nerdmaster/magicsql",
-			"revision": "1feed1b3eac8e0911f050c83ce226349456edaa4",
-			"branch": "HEAD"
+			"revision": "947e29a5b4cbccfcf2f2c0e3344044ea206d76e1",
+			"branch": "master"
 		},
 		{
 			"importpath": "github.com/alexedwards/scs",
