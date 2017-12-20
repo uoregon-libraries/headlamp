@@ -2,6 +2,8 @@ package main
 
 import (
 	"db"
+	"fmt"
+	"html/template"
 	"os"
 	"path"
 	"strconv"
@@ -13,6 +15,8 @@ import (
 var localTemplateFuncs = tmpl.FuncMap{
 	"BreadCrumbs":                breadcrumbs,
 	"SearchPath":                 searchPath,
+	"AddToQueueButton":           addToQueueButton,
+	"RemoveFromQueueButton":      removeFromQueueButton,
 	"BrowseProjectPath":          browseProjectPath,
 	"BrowseFolderPath":           browseFolderPath,
 	"BrowseContainingFolderPath": browseContainingFolderPath,
@@ -42,6 +46,57 @@ func searchPath(project *db.Project, folder *db.Folder) string {
 		return joinPaths("search") + "/"
 	}
 	return joinPaths("search", pathify(project, folder))
+}
+
+func addToQueuePath(file *db.File) string {
+	return joinPaths("bulk", "add", strconv.FormatUint(file.ID, 10))
+}
+
+func removeFromQueuePath(file *db.File) string {
+	return joinPaths("bulk", "remove", strconv.FormatUint(file.ID, 10))
+}
+
+func makeButton(val string, classes []string, attrs map[string]string, disabled bool) template.HTML {
+	if disabled {
+		attrs["disabled"] = "disabled"
+	}
+	attrs["class"] = strings.Join(classes, " ")
+
+	var attrPairs []string
+	for k, v := range attrs {
+		attrPairs = append(attrPairs, fmt.Sprintf(`%s="%s"`, k, v))
+	}
+	return template.HTML(fmt.Sprintf("<button %s>%s</button>", strings.Join(attrPairs, " "), val))
+}
+
+func bulkButtonID(add bool, file *db.File) string {
+	var prefix string
+	if add {
+		prefix = "add"
+	} else {
+		prefix = "remove"
+	}
+	return fmt.Sprintf("%s-queue-%d", prefix, file.ID)
+}
+
+func addToQueueButton(q *BulkFileQueue, file *db.File) template.HTML {
+	var classes = []string{"bulk-action", "btn", "btn-success"}
+	var attrs = map[string]string{
+		"id":                     bulkButtonID(true, file),
+		"data-action":            addToQueuePath(file),
+		"data-toggle-on-success": bulkButtonID(false, file),
+	}
+	return makeButton("Queue", classes, attrs, q.HasFile(file))
+}
+
+func removeFromQueueButton(q *BulkFileQueue, file *db.File) template.HTML {
+	var classes = []string{"bulk-action", "btn", "btn-danger"}
+	var attrs = map[string]string{
+		"id":                     bulkButtonID(false, file),
+		"data-action":            removeFromQueuePath(file),
+		"data-toggle-on-success": bulkButtonID(true, file),
+	}
+	return makeButton("Remove", classes, attrs, !q.HasFile(file))
 }
 
 // browseProjectPath produces the URL to browse the given project's top-level folder

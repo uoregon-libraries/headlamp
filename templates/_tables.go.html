@@ -21,6 +21,7 @@
     <th scope="col">Folder</th>
     <th scope="col">Archive Date</th>
     <th scope="col">Filename</th>
+    <th scope="col">Bulk</th>
   </tr>
 
 {{range .Files}}
@@ -39,6 +40,10 @@
     <td>
       <a href="{{ViewFilePath .}}">{{.Name}}</a>
       (<a href="{{DownloadFilePath .}}">Download</a>)
+    </td>
+    <td>
+      {{AddToQueueButton $.Queue .}}
+      {{RemoveFromQueueButton $.Queue .}}
     </td>
   </tr>
 {{end}}
@@ -67,6 +72,10 @@
   unique.
 </p>
 {{end}} <!-- if .TooManyFiles -->
+<p>
+  Click "Queue" or "Remove" under the "Bulk" heading to add or remove items
+  from your bulk download queue
+</p>
 {{template "filesTable" .}}
 {{end}} <!-- if .Files -->
 {{end}} <!-- foldersAndFiles -->

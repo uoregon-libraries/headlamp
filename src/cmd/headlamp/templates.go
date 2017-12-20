@@ -18,8 +18,14 @@ func (t *Template) Render(w http.ResponseWriter, r *http.Request, data vars) {
 	var s = sessionManager.Load(r)
 	data["Alert"], _ = s.PopString(w, "Alert")
 	data["Info"], _ = s.PopString(w, "Info")
+	var q = NewBulkFileQueue()
+	var err = s.GetObject("Queue", q)
+	if err != nil {
+		logger.Errorf("Unable to load user's bulk file queue: %s", err)
+	}
+	data["Queue"] = q
 
-	var err = t.Execute(w, data)
+	err = t.Execute(w, data)
 	if err != nil {
 		logger.Errorf("Unable to render home template: %s", err)
 	}
