@@ -216,7 +216,7 @@ func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, te
 	}
 
 	search.Render(w, r, vars{
-		"Title":        fmt.Sprintf("Headlamp: File Search"),
+		"Title":        "Headlamp: File Search",
 		"SearchTerm":   term,
 		"Project":      bsd.project,
 		"Folder":       bsd.folder,
@@ -243,7 +243,7 @@ func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, 
 	}
 
 	search.Render(w, r, vars{
-		"Title":            fmt.Sprintf("Headlamp: Folder Search"),
+		"Title":            "Headlamp: Folder Search",
 		"FolderSearchTerm": term,
 		"Project":          bsd.project,
 		"Folder":           bsd.folder,
