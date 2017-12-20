@@ -23,6 +23,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"ViewFilePath":               viewFilePath,
 	"DownloadFilePath":           downloadFilePath,
 	"Pathify":                    pathify,
+	"GenericPath":                joinPaths,
 	"stripProjectFolder":         stripProjectFolder,
 }
 
