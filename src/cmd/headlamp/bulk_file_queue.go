@@ -2,6 +2,7 @@ package main
 
 import "db"
 
+// seenFile just gives us a zero-length value for the FileIDs map
 var seenFile struct{}
 
 // BulkFileQueue represents a user's queued files for download
