@@ -66,7 +66,7 @@ func startServer(baseURL, bind string) *http.Server {
 	var store = memstore.New(time.Hour * 24)
 	sessionManager = scs.NewManager(store)
 	sessionManager.Lifetime(time.Hour * 24)
-	sessionManager.Secure(true)
+	sessionManager.HttpOnly(false)
 
 	var server = &http.Server{Addr: bind, Handler: sessionManager.Use(mux)}
 
