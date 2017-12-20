@@ -61,20 +61,7 @@ func (s *FSelect) setProject(data interface{}) {
 
 	// if Project was blank, pull project via IDs
 	if s.project == nil {
-		var projectLookup = make(map[int]*Project)
-		var projectList, err = s.op.AllProjects()
-		if err != nil {
-			return
-		}
-		for _, p := range projectList {
-			projectLookup[p.ID] = p
-		}
-		for _, f := range files {
-			f.Project = projectLookup[f.ProjectID]
-		}
-		for _, f := range folders {
-			f.Project = projectLookup[f.ProjectID]
-		}
+		s.op.PopulateProjects(files, folders)
 		return
 	}
 

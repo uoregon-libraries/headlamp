@@ -223,3 +223,22 @@ func (op *Operation) FindFileByID(id uint64) (*File, error) {
 	}
 	return file, op.Operation.Err()
 }
+
+// PopulateProjects fills in the project data for all passed-in files and folders
+func (op *Operation) PopulateProjects(files []*File, folders []*Folder) error {
+	var projectLookup = make(map[int]*Project)
+	var projectList, err = op.AllProjects()
+	if err != nil {
+		return err
+	}
+	for _, p := range projectList {
+		projectLookup[p.ID] = p
+	}
+	for _, f := range files {
+		f.Project = projectLookup[f.ProjectID]
+	}
+	for _, f := range folders {
+		f.Project = projectLookup[f.ProjectID]
+	}
+	return nil
+}
