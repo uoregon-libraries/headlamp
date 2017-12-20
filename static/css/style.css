@@ -30,6 +30,34 @@ body {
 .alert-info     { color: #002443; }
 caption         { color: #333; }
 
+.btn            {
+  color: black;
+}
+.btn:hover, .btn:focus {
+  color: black;
+  border-color: black;
+}
+.btn-success {
+  background-color: #8feb8f;
+}
+.btn-success:hover, .btn-success:focus {
+  background-color: #5cb85c;
+}
+.btn-danger {
+  background-color: #ff8682;
+}
+.btn-danger:hover, .btn-danger:focus {
+  background-color: #d9534f;
+}
+
+/* Make disabled buttons more obvious */
+.btn[disabled], .btn[disabled]:hover, .btn[disabled]:focus {
+  opacity: 1.0;
+  color: #666;
+  background-color: #eee;
+  border-color: black;
+}
+
 form.actions {
   display: inline-block;
 }
