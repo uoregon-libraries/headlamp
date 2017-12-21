@@ -1,8 +1,9 @@
 package db
 
 import (
-	"fmt"
 	"path/filepath"
+
+	"github.com/uoregon-libraries/gopkg/humanize"
 )
 
 // Project maps to the projects database table, which represents a "magic"
@@ -55,17 +56,7 @@ type File struct {
 
 // HumanFilesize returns a more meaningful value for filesizes
 func (f *File) HumanFilesize() string {
-	var suffixes = []string{"B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"}
-	var size = float64(f.Filesize)
-	var idx = 0
-	for size > 1024 && idx < len(suffixes) {
-		idx++
-		size = size / 1024.0
-	}
-	if idx == 0 {
-		return fmt.Sprintf("%d %s", f.Filesize, suffixes[idx])
-	}
-	return fmt.Sprintf("%0.2f %s", size, suffixes[idx])
+	return humanize.Bytes(uint64(f.Filesize))
 }
 
 // ContainingFolder returns the path to the file's folder for cases where
