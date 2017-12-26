@@ -3,6 +3,23 @@
 <h2>Bulk Download Queue</h2>
 
 {{if .Files}}
+<h3>Build Archive</h3>
+<p>
+  You may request your current queue be built into an archive.  Depending on
+  the number and size of files, this operation can take a while, so you need to
+  leave at least one notification email address.  The address(es) will be sent
+  a message when the archive is ready for download.
+</p>
+<form action="{{BulkDownloadCreatePath}}" method="POST" />
+  <div class="form-group">
+    <label for="emails">Notification Email(s)</label>
+    <input type="text" class="form-control" id="emails" name="emails" value="{{.Emails}}" />
+  </div>
+
+  <button type="submit" class="btn btn-default">Build Archive</button>
+</form>
+
+<h3>Current Queue</h3>
 <p>
   Your current queue consists of {{len .Files}} files totaling {{.TotalFilesize | humanFilesize}}.
 </p>

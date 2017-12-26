@@ -3,9 +3,11 @@ package main
 import (
 	"db"
 	"net/http"
+	"net/mail"
 	"strconv"
 
 	"github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/gopkg/webutil"
 )
 
 func bulkQueueHandler(w http.ResponseWriter, r *http.Request) {
@@ -80,6 +82,12 @@ func bulkDownloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Grab saved email list if any is present - we ignore the error here because
+	// (a) this isn't critical functionality, and (b) if something were wrong
+	// with the session, it probably already went wrong when trying to grab the
+	// bulk file queue
+	var emails, _ = s.GetString("emails")
+
 	var files []*db.File
 	files, err = q.Files()
 	if err != nil {
@@ -97,5 +105,62 @@ func bulkDownloadHandler(w http.ResponseWriter, r *http.Request) {
 		"Title":         "Headlamp: Bulk Download",
 		"Files":         files,
 		"TotalFilesize": totalFilesize,
+		"Emails":        emails,
 	})
+}
+
+func bulkCreateArchiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Grab the session data that holds our queue
+	var s = sessionManager.Load(r)
+	var q = NewBulkFileQueue()
+	var err = s.GetObject("Queue", q)
+	if err != nil {
+		logger.Errorf("Unable to load user's bulk file queue: %s", err)
+		_500(w, r, "Unable to load your bulk download queue.  Try again or contact support.")
+		return
+	}
+
+	// Store email address list for future use, even if the request is otherwise invalid
+	var emails = r.FormValue("emails")
+	if emails != "" {
+		s.PutString(w, "emails", emails)
+	}
+
+	// Pull files so we have their paths
+	var files []*db.File
+	files, err = q.Files()
+	if err != nil {
+		logger.Errorf("Unable to load files from the database: %s", err)
+		_500(w, r, "Unable to load your bulk download queue.  Try again or contact support.")
+		return
+	}
+
+	if len(files) == 0 {
+		setAlert(w, r, "You don't have any files to archive!")
+		http.Redirect(w, r, viewBulkQueuePath(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	if emails == "" {
+		setAlert(w, r, "You must enter at least one valid notification email address")
+		http.Redirect(w, r, viewBulkQueuePath(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	var addrs []*mail.Address
+	addrs, err = mail.ParseAddressList(emails)
+	if err != nil {
+		setAlert(w, r, "One or more addresses are invalid - please re-enter and try again")
+		http.Redirect(w, r, viewBulkQueuePath(), http.StatusTemporaryRedirect)
+		return
+	}
+
+	runZipJob(addrs, files)
+	s.Remove(w, "Queue")
+	setInfo(w, r, "Your archive is now being generated, and your bulk file queue has been emptied.")
+	http.Redirect(w, r, webutil.Webroot, http.StatusTemporaryRedirect)
+}
+
+// TODO: fire off a background job to zip up the files
+func runZipJob(addrs []*mail.Address, files []*db.File) {
 }

@@ -24,6 +24,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"BrowseContainingFolderPath": browseContainingFolderPath,
 	"ViewFilePath":               viewFilePath,
 	"DownloadFilePath":           downloadFilePath,
+	"BulkDownloadCreatePath":     bulkDownloadCreatePath,
 	"Pathify":                    pathify,
 	"GenericPath":                joinPaths,
 	"stripProjectFolder":         stripProjectFolder,
@@ -126,6 +127,10 @@ func viewFilePath(file *db.File) string {
 
 func downloadFilePath(file *db.File) string {
 	return joinPaths("download", strconv.FormatUint(file.ID, 10))
+}
+
+func bulkDownloadCreatePath() string {
+	return joinPaths("bulk", "create")
 }
 
 // stripProjectFolder takes a string representing a path, and strips out the
