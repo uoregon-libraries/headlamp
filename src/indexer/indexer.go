@@ -3,6 +3,7 @@ package indexer
 
 import (
 	"bytes"
+	"config"
 	"db"
 	"fmt"
 	"io/ioutil"
@@ -39,7 +40,7 @@ const (
 type Indexer struct {
 	sync.Mutex
 	dbh *db.Database
-	c   *Config
+	c   *config.Config
 
 	// projects keeps a cache of all projects, keyed by the name, to avoid
 	// millions of unnecessary lookups in the db
@@ -65,7 +66,7 @@ type indexerOperation struct {
 }
 
 // New sets up a scanner for use in indexing dark-archive file data
-func New(dbh *db.Database, conf *Config) *Indexer {
+func New(dbh *db.Database, conf *config.Config) *Indexer {
 	return &Indexer{dbh: dbh, c: conf, projects: make(map[string]*project)}
 }
 
@@ -288,9 +289,9 @@ func (i *Indexer) parseFileRecord(inventoryFile string, index int, record []byte
 	var projectName, dateDir string
 	for index, part := range pathParts {
 		switch i.c.PathFormat[index] {
-		case Project:
+		case config.Project:
 			projectName = part
-		case Date:
+		case config.Date:
 			dateDir = part
 		}
 	}

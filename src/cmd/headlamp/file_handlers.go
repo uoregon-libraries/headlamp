@@ -44,9 +44,9 @@ func getFile(w http.ResponseWriter, r *http.Request) *os.File {
 		return nil
 	}
 
-	var fullPath = filepath.Join(daRoot, file.FullPath)
+	var fullPath = filepath.Join(conf.DARoot, file.FullPath)
 	if !fileutil.IsFile(fullPath) {
-		logger.Errorf("File id %d describes a file I cannot find: %q / %q", file.ID, daRoot, file.FullPath)
+		logger.Errorf("File id %d describes a file I cannot find: %q / %q", file.ID, conf.DARoot, file.FullPath)
 		_500(w, r, fmt.Sprintf("Unable to find %q.  Try again or contact support.", file.FullPath))
 		return nil
 	}

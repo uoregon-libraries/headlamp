@@ -1,0 +1,32 @@
+# Bind address: where will Headlamp listen for connections?
+BIND_ADDRESS=":8080"
+
+# Web path: what is the root of the website?
+WEBPATH="https://foo.bar/subfoo"
+
+# Dark archive path: where is the root of the dark archive?  This should be the
+# path to the root of the dark archive.  This will be stripped from all indexed
+# data in order to avoid problems if the mount point to the dark archive
+# changes.
+DARK_ARCHIVE_PATH="/mnt/darkarchive"
+
+# Archive path format: this should express the path using the keywords
+# "project", "date", and "ignore".  There must be exactly one occurrence of
+# "project", designating which path element specifies the project name.  There
+# must be one "date" as well, which tells us which folder represents the
+# archive date (in YYYY-MM-DD format).  There can be any number of "ignore"
+# elements in the path, each of which are simply ignored in order to form the
+# "public" path.  e.g., "project/ignore/date" would state that the top-level
+# folder is the project name and the next two folders are collapsed, while the
+# third is stored as the archive date.  "ignore/project/date" might be used for
+# "Volume/project/date" style archives.
+ARCHIVE_PATH_FORMAT="ignore/project/date"
+
+# Inventory file glob: a pattern to find all the inventory files, such as
+# "*/*/INVENTORY/*.csv".  The files should be discoverable by taking the path
+# of the inventory file, removing the filename, adding "../" and the filename.
+# e.g., project/date/INVENTORY/foo.csv might describe "bar/baz.tiff", which
+# could be found at project/date/INVENTORY/../bar/baz.tiff, or
+# project/date/bar/baz.tiff.  Note that "manifest.csv" is automatically skipped
+# as those files are always our composite inventories.
+INVENTORY_FILE_GLOB="*/*/INVENTORY/*.csv"

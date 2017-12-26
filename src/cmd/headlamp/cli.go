@@ -1,6 +1,7 @@
 package main
 
 import (
+	"config"
 	"fmt"
 	"os"
 	"regexp"
@@ -32,21 +33,24 @@ func usage(msg string) {
 		status = 1
 	}
 
-	perrf("Usage: %s <bind address> <webpath> <dark archive path>", os.Args[0])
-	perr("")
-	perr("Example:")
-	perrraw(fmt.Sprintf(`    %s ":8080" "https://foo.bar/subfoo" /mnt/darkarchive/`, os.Args[0]))
+	perrf("Usage: %s <settings file>", os.Args[0])
 
 	os.Exit(status)
 }
 
-func getCLI() (string, string, string) {
-	if len(os.Args) < 4 {
-		usage("You must specify all arguments")
+func getCLI() *config.Config {
+	if len(os.Args) < 2 {
+		usage("You must specify a settings file")
 	}
-	if len(os.Args) > 4 {
+	if len(os.Args) > 2 {
 		usage("Too many arguments")
 	}
 
-	return os.Args[1], os.Args[2], os.Args[3]
+	var c, err = config.Read(os.Args[1])
+	if err != nil {
+		perrf("Invalid configuration: %s", err)
+		os.Exit(1)
+	}
+
+	return c
 }

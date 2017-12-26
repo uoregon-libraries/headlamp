@@ -1,6 +1,7 @@
 package main
 
 import (
+	"config"
 	"context"
 	"db"
 	"net/http"
@@ -18,14 +19,14 @@ import (
 
 // dbh is our global database handle for DA searches
 var dbh = db.New()
-var basePath, daRoot string
+var basePath string
+var conf *config.Config
 var sessionManager *scs.Manager
 
 func main() {
-	var baseURL, bind string
-	baseURL, bind, daRoot = getCLI()
+	conf = getCLI()
 
-	var s = startServer(baseURL, bind)
+	var s = startServer()
 	interrupts.TrapIntTerm(func() {
 		var ctx, cancel = context.WithDeadline(context.Background(), time.Now().Add(time.Minute))
 		defer cancel()
@@ -37,12 +38,9 @@ func main() {
 	}
 }
 
-func startServer(baseURL, bind string) *http.Server {
+func startServer() *http.Server {
 	var mux = http.NewServeMux()
-	var u, err = url.Parse(baseURL)
-	if err != nil {
-		logger.Fatalf("Unable to parse base URL %q: %s", baseURL, err)
-	}
+	var u, _ = url.Parse(conf.WebPath)
 
 	basePath = strings.TrimRight(u.Path, "/")
 	logger.Debugf("Serving root from %q", basePath)
@@ -55,7 +53,7 @@ func startServer(baseURL, bind string) *http.Server {
 	mux.HandleFunc(basePath+"/bulk/create", bulkCreateArchiveHandler)
 	mux.HandleFunc(basePath+"/bulk-download/", bulkDownloadHandler)
 
-	var staticPath = filepath.Join(filepath.Dir(os.Args[2]), "static")
+	var staticPath = filepath.Join(filepath.Dir(conf.WebPath), "static")
 	var fileServer = http.FileServer(http.Dir(staticPath))
 	var staticPrefix = basePath + "/static/"
 	mux.Handle(staticPrefix, http.StripPrefix(staticPrefix, fileServer))
@@ -71,7 +69,7 @@ func startServer(baseURL, bind string) *http.Server {
 	sessionManager.Lifetime(time.Hour * 24)
 	sessionManager.HttpOnly(false)
 
-	var server = &http.Server{Addr: bind, Handler: sessionManager.Use(mux)}
+	var server = &http.Server{Addr: conf.BindAddress, Handler: sessionManager.Use(mux)}
 
 	go func() {
 		logger.Infof("Listening for HTTP connections")
