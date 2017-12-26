@@ -18,11 +18,11 @@ import (
 
 // dbh is our global database handle for DA searches
 var dbh = db.New()
-var basePath, bind, daRoot string
+var basePath, daRoot string
 var sessionManager *scs.Manager
 
 func main() {
-	var baseURL string
+	var baseURL, bind string
 	baseURL, bind, daRoot = getCLI()
 
 	var s = startServer(baseURL, bind)
