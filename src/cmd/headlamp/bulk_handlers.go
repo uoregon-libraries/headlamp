@@ -88,8 +88,14 @@ func bulkDownloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var totalFilesize int64
+	for _, f := range files {
+		totalFilesize += f.Filesize
+	}
+
 	bulk.Render(w, r, vars{
-		"Title": "Headlamp: Bulk Download",
-		"Files": files,
+		"Title":         "Headlamp: Bulk Download",
+		"Files":         files,
+		"TotalFilesize": totalFilesize,
 	})
 }

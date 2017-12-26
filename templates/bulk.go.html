@@ -3,7 +3,10 @@
 <h2>Bulk Download Queue</h2>
 
 {{if .Files}}
-<p>Your current queue consists of a total of {{len .Files}} files:</p>
+<p>
+  Your current queue consists of {{len .Files}} files totaling {{.TotalFilesize | humanFilesize}}.
+</p>
+
 {{template "bulkFilesTable" .}}
 
 {{else}} <!-- if .Files -->
