@@ -17,6 +17,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"SearchPath":                 searchPath,
 	"AddToQueueButton":           addToQueueButton,
 	"RemoveFromQueueButton":      removeFromQueueButton,
+	"ViewBulkQueuePath":          viewBulkQueuePath,
 	"BrowseProjectPath":          browseProjectPath,
 	"BrowseFolderPath":           browseFolderPath,
 	"BrowseContainingFolderPath": browseContainingFolderPath,
@@ -98,6 +99,10 @@ func removeFromQueueButton(q *BulkFileQueue, file *db.File) template.HTML {
 		"data-toggle-on-success": bulkButtonID(true, file),
 	}
 	return makeButton("Remove", classes, attrs, !q.HasFile(file))
+}
+
+func viewBulkQueuePath() string {
+	return joinPaths("bulk-download")
 }
 
 // browseProjectPath produces the URL to browse the given project's top-level folder
