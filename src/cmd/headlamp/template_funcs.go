@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/uoregon-libraries/gopkg/humanize"
 	"github.com/uoregon-libraries/gopkg/tmpl"
 )
 
@@ -26,6 +27,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"Pathify":                    pathify,
 	"GenericPath":                joinPaths,
 	"stripProjectFolder":         stripProjectFolder,
+	"humanFilesize":              humanFilesize,
 }
 
 // sanitizePath takes a path from a file or folder and makes it
@@ -154,4 +156,9 @@ func pathify(project *db.Project, folder *db.Folder) string {
 	}
 
 	return p
+}
+
+// humanFilesize returns a more meaningful value for filesizes
+func humanFilesize(bytes int64) string {
+	return humanize.Bytes(bytes)
 }

@@ -2,8 +2,6 @@ package db
 
 import (
 	"path/filepath"
-
-	"github.com/uoregon-libraries/gopkg/humanize"
 )
 
 // Project maps to the projects database table, which represents a "magic"
@@ -52,11 +50,6 @@ type File struct {
 	Name        string
 	FullPath    string
 	PublicPath  string
-}
-
-// HumanFilesize returns a more meaningful value for filesizes
-func (f *File) HumanFilesize() string {
-	return humanize.Bytes(uint64(f.Filesize))
 }
 
 // ContainingFolder returns the path to the file's folder for cases where

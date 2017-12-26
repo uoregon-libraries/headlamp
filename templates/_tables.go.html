@@ -78,7 +78,7 @@
       (<a href="{{DownloadFilePath .}}">Download</a>)
     </td>
     <td>
-      {{.HumanFilesize}}
+      {{.Filesize | humanFilesize}}
     </td>
   </tr>
 {{end}}
