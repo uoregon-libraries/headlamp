@@ -4,6 +4,9 @@ BIND_ADDRESS=":8080"
 # Web path: what is the root of the website?
 WEBPATH="https://foo.bar/subfoo"
 
+# Web root: where are the static/ and templates/ dirs living?
+WEBROOT="/usr/local/headlamp"
+
 # Dark archive path: where is the root of the dark archive?  This should be the
 # path to the root of the dark archive.  This will be stripped from all indexed
 # data in order to avoid problems if the mount point to the dark archive

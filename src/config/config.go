@@ -12,6 +12,7 @@ import (
 type Config struct {
 	BindAddress      string `setting:"BIND_ADDRESS"`
 	WebPath          string `setting:"WEBPATH" type:"url"`
+	Webroot          string `setting:"WEBROOT" type:"path"`
 	DARoot           string `setting:"DARK_ARCHIVE_PATH" type:"path"`
 	PathFormat       []PathToken
 	PathFormatString string `setting:"ARCHIVE_PATH_FORMAT"`

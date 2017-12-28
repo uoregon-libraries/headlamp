@@ -21,7 +21,7 @@ var home, browse, search, bulk, empty *Template
 
 func initTemplates(webroot string) {
 	webutil.Webroot = webroot
-	root = tmpl.Root("layout", "templates/")
+	root = tmpl.Root("layout", filepath.Join(conf.Webroot, "templates"))
 	root.Funcs(tmpl.DefaultTemplateFunctions)
 	root.Funcs(webutil.FuncMap)
 	root.Funcs(localTemplateFuncs)
