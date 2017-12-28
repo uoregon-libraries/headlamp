@@ -16,12 +16,11 @@ import (
 // more than this many, we let the user know to do a different search
 const maxFiles = 1000
 
-var root *tmpl.TRoot
 var home, browse, search, bulk, empty *Template
 
 func initTemplates(webroot string) {
 	webutil.Webroot = webroot
-	root = tmpl.Root("layout", filepath.Join(conf.Webroot, "templates"))
+	var root = tmpl.Root("layout", filepath.Join(conf.Webroot, "templates"))
 	root.Funcs(tmpl.DefaultTemplateFunctions)
 	root.Funcs(webutil.FuncMap)
 	root.Funcs(localTemplateFuncs)
