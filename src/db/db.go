@@ -3,10 +3,12 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"net/mail"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Nerdmaster/magicsql"
 	_ "github.com/mattn/go-sqlite3" // database/sql requires "side-effect" packages be loaded
@@ -20,6 +22,7 @@ type Database struct {
 	mtFolders     *magicsql.MagicTable
 	mtProjects    *magicsql.MagicTable
 	mtInventories *magicsql.MagicTable
+	mtZipJobs     *magicsql.MagicTable
 }
 
 // Operation wraps a magicsql Operation with preloaded OperationTable
@@ -30,6 +33,7 @@ type Operation struct {
 	Folders     *magicsql.OperationTable
 	Inventories *magicsql.OperationTable
 	Projects    *magicsql.OperationTable
+	ZipJobs     *magicsql.OperationTable
 }
 
 // New sets up a database connection and returns a usable Database
@@ -45,6 +49,7 @@ func New() *Database {
 		mtFolders:     magicsql.Table("folders", &Folder{}),
 		mtProjects:    magicsql.Table("projects", &Project{}),
 		mtInventories: magicsql.Table("inventories", &Inventory{}),
+		mtZipJobs:     magicsql.Table("zip_jobs", &ZipJob{}),
 	}
 }
 
@@ -57,6 +62,7 @@ func (db *Database) Operation() *Operation {
 		Folders:     magicOp.OperationTable(db.mtFolders),
 		Inventories: magicOp.OperationTable(db.mtInventories),
 		Projects:    magicOp.OperationTable(db.mtProjects),
+		ZipJobs:     magicOp.OperationTable(db.mtZipJobs),
 	}
 }
 
@@ -281,4 +287,32 @@ func (op *Operation) GetFilesByIDs(ids []uint64) ([]*File, error) {
 
 	op.PopulateProjects(files, nil)
 	return files, op.Operation.Err()
+}
+
+// QueueZipJob creates a new zip job in the database for async processing
+func (op *Operation) QueueZipJob(addrs []*mail.Address, files []*File) error {
+	if len(files) == 0 {
+		return fmt.Errorf("no files to zip")
+	}
+
+	if len(addrs) == 0 {
+		return fmt.Errorf("no notification addresses for zip job")
+	}
+
+	var filePaths []string
+	for _, f := range files {
+		filePaths = append(filePaths, f.FullPath)
+	}
+
+	var emails []string
+	for _, addr := range addrs {
+		emails = append(emails, addr.String())
+	}
+
+	op.ZipJobs.Save(&ZipJob{
+		CreatedAt:          time.Now(),
+		NotificationEmails: strings.Join(emails, ","),
+		Files:              strings.Join(filePaths, "\x1E"),
+	})
+	return op.Operation.Err()
 }

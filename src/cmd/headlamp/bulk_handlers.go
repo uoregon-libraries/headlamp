@@ -155,12 +155,15 @@ func bulkCreateArchiveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	runZipJob(addrs, files)
+	err = dbh.Operation().QueueZipJob(addrs, files)
+	if err != nil {
+		logger.Errorf("Error trying to queue new zipfile: %s", err)
+		setAlert(w, r, "Unable to queue the zipfile creation.  Please try again or contact support.")
+		http.Redirect(w, r, viewBulkQueuePath(), http.StatusTemporaryRedirect)
+		return
+	}
+
 	s.Remove(w, "Queue")
 	setInfo(w, r, "Your archive is now being generated, and your bulk file queue has been emptied.")
 	http.Redirect(w, r, webutil.Webroot, http.StatusTemporaryRedirect)
-}
-
-// TODO: fire off a background job to zip up the files
-func runZipJob(addrs []*mail.Address, files []*db.File) {
 }

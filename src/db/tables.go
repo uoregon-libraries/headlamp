@@ -2,6 +2,7 @@ package db
 
 import (
 	"path/filepath"
+	"time"
 )
 
 // Project maps to the projects database table, which represents a "magic"
@@ -56,4 +57,14 @@ type File struct {
 // loading the folder data for each file would be an unnecessary task
 func (f *File) ContainingFolder() string {
 	return filepath.Dir(f.PublicPath)
+}
+
+// The ZipJob structure maps to zip_jobs, storing RS-separated files and
+// comma-separated notification email(s).  The record represents a single
+// archive creation request.
+type ZipJob struct {
+	ID                 int `sql:",primary"`
+	CreatedAt          time.Time
+	NotificationEmails string
+	Files              string
 }
