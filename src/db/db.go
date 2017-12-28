@@ -316,3 +316,24 @@ func (op *Operation) QueueZipJob(addrs []*mail.Address, files []*File) error {
 	})
 	return op.Operation.Err()
 }
+
+// ProcessZipJob pulls the longest-waiting zip job and runs the callback with
+// it.  If the callback returns success, the zip job is removed from the
+// database.  If no zip job is found, the callback isn't run.
+func (op *Operation) ProcessZipJob(cb func(*ZipJob) bool) error {
+	var zj = &ZipJob{}
+	var ok = op.ZipJobs.Select().Order("created_at ASC").Limit(1).First(zj)
+	if !ok {
+		return nil
+	}
+	if op.Operation.Err() != nil {
+		return op.Operation.Err()
+	}
+
+	if cb(zj) {
+		op.Operation.Exec("DELETE FROM zip_jobs WHERE id = ?", zj.ID)
+		return op.Operation.Err()
+	}
+
+	return nil
+}
