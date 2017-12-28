@@ -2,14 +2,32 @@ package main
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 	"github.com/uoregon-libraries/gopkg/tmpl"
+	"github.com/uoregon-libraries/gopkg/webutil"
 )
 
 // Template wraps the central package to add session-aware rendering
 type Template struct {
 	*tmpl.Template
+}
+
+var home, browse, search, bulk, empty *Template
+
+func initTemplates(webroot string) {
+	webutil.Webroot = webroot
+	var root = tmpl.Root("layout", filepath.Join(conf.Approot, "templates"))
+	root.Funcs(tmpl.DefaultTemplateFunctions)
+	root.Funcs(webutil.FuncMap)
+	root.Funcs(localTemplateFuncs)
+	root.MustReadPartials("layout.go.html", "_search_form.go.html", "_tables.go.html")
+	home = &Template{root.Clone().MustBuild("home.go.html")}
+	browse = &Template{root.Clone().MustBuild("browse.go.html")}
+	search = &Template{root.Clone().MustBuild("search.go.html")}
+	bulk = &Template{root.Clone().MustBuild("bulk.go.html")}
+	empty = &Template{root.Template()}
 }
 
 // Render executes this template, logging errors and automagically pulling

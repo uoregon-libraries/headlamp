@@ -8,29 +8,11 @@ import (
 	"strings"
 
 	"github.com/uoregon-libraries/gopkg/logger"
-	"github.com/uoregon-libraries/gopkg/tmpl"
-	"github.com/uoregon-libraries/gopkg/webutil"
 )
 
 // maxFiles tells the app how many files to display on at once; if there are
 // more than this many, we let the user know to do a different search
 const maxFiles = 1000
-
-var home, browse, search, bulk, empty *Template
-
-func initTemplates(webroot string) {
-	webutil.Webroot = webroot
-	var root = tmpl.Root("layout", filepath.Join(conf.Approot, "templates"))
-	root.Funcs(tmpl.DefaultTemplateFunctions)
-	root.Funcs(webutil.FuncMap)
-	root.Funcs(localTemplateFuncs)
-	root.MustReadPartials("layout.go.html", "_search_form.go.html", "_tables.go.html")
-	home = &Template{root.Clone().MustBuild("home.go.html")}
-	browse = &Template{root.Clone().MustBuild("browse.go.html")}
-	search = &Template{root.Clone().MustBuild("search.go.html")}
-	bulk = &Template{root.Clone().MustBuild("bulk.go.html")}
-	empty = &Template{root.Template()}
-}
 
 type vars map[string]interface{}
 
