@@ -155,10 +155,10 @@ func bulkCreateArchiveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = dbh.Operation().QueueZipJob(addrs, files)
+	err = dbh.Operation().QueueArchiveJob(addrs, files)
 	if err != nil {
-		logger.Errorf("Error trying to queue new zipfile: %s", err)
-		setAlert(w, r, "Unable to queue the zipfile creation.  Please try again or contact support.")
+		logger.Errorf("Error trying to queue new archive: %s", err)
+		setAlert(w, r, "Unable to queue the archive creation.  Please try again or contact support.")
 		http.Redirect(w, r, viewBulkQueuePath(), http.StatusTemporaryRedirect)
 		return
 	}

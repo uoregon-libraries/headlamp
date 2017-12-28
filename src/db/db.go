@@ -22,7 +22,7 @@ type Database struct {
 	mtFolders     *magicsql.MagicTable
 	mtProjects    *magicsql.MagicTable
 	mtInventories *magicsql.MagicTable
-	mtZipJobs     *magicsql.MagicTable
+	mtArchiveJobs *magicsql.MagicTable
 }
 
 // Operation wraps a magicsql Operation with preloaded OperationTable
@@ -33,7 +33,7 @@ type Operation struct {
 	Folders     *magicsql.OperationTable
 	Inventories *magicsql.OperationTable
 	Projects    *magicsql.OperationTable
-	ZipJobs     *magicsql.OperationTable
+	ArchiveJobs *magicsql.OperationTable
 }
 
 // New sets up a database connection and returns a usable Database
@@ -49,7 +49,7 @@ func New() *Database {
 		mtFolders:     magicsql.Table("folders", &Folder{}),
 		mtProjects:    magicsql.Table("projects", &Project{}),
 		mtInventories: magicsql.Table("inventories", &Inventory{}),
-		mtZipJobs:     magicsql.Table("zip_jobs", &ZipJob{}),
+		mtArchiveJobs: magicsql.Table("archive_jobs", &ArchiveJob{}),
 	}
 }
 
@@ -62,7 +62,7 @@ func (db *Database) Operation() *Operation {
 		Folders:     magicOp.OperationTable(db.mtFolders),
 		Inventories: magicOp.OperationTable(db.mtInventories),
 		Projects:    magicOp.OperationTable(db.mtProjects),
-		ZipJobs:     magicOp.OperationTable(db.mtZipJobs),
+		ArchiveJobs: magicOp.OperationTable(db.mtArchiveJobs),
 	}
 }
 
@@ -289,14 +289,14 @@ func (op *Operation) GetFilesByIDs(ids []uint64) ([]*File, error) {
 	return files, op.Operation.Err()
 }
 
-// QueueZipJob creates a new zip job in the database for async processing
-func (op *Operation) QueueZipJob(addrs []*mail.Address, files []*File) error {
+// QueueArchiveJob creates a new archive job in the database for async processing
+func (op *Operation) QueueArchiveJob(addrs []*mail.Address, files []*File) error {
 	if len(files) == 0 {
-		return fmt.Errorf("no files to zip")
+		return fmt.Errorf("no files to archive")
 	}
 
 	if len(addrs) == 0 {
-		return fmt.Errorf("no notification addresses for zip job")
+		return fmt.Errorf("no notification addresses for archive job")
 	}
 
 	var filePaths []string
@@ -309,7 +309,7 @@ func (op *Operation) QueueZipJob(addrs []*mail.Address, files []*File) error {
 		emails = append(emails, addr.String())
 	}
 
-	op.ZipJobs.Save(&ZipJob{
+	op.ArchiveJobs.Save(&ArchiveJob{
 		CreatedAt:          time.Now(),
 		NotificationEmails: strings.Join(emails, ","),
 		Files:              strings.Join(filePaths, "\x1E"),
@@ -317,12 +317,12 @@ func (op *Operation) QueueZipJob(addrs []*mail.Address, files []*File) error {
 	return op.Operation.Err()
 }
 
-// ProcessZipJob pulls the longest-waiting zip job and runs the callback with
-// it.  If the callback returns success, the zip job is removed from the
-// database.  If no zip job is found, the callback isn't run.
-func (op *Operation) ProcessZipJob(cb func(*ZipJob) bool) error {
-	var zj = &ZipJob{}
-	var ok = op.ZipJobs.Select().Order("created_at ASC").Limit(1).First(zj)
+// ProcessArchiveJob pulls the longest-waiting archive job and runs the
+// callback with it.  If the callback returns success, the archive job is
+// removed from the database.  If no job is found, the callback isn't run.
+func (op *Operation) ProcessArchiveJob(cb func(*ArchiveJob) bool) error {
+	var j = &ArchiveJob{}
+	var ok = op.ArchiveJobs.Select().Order("created_at ASC").Limit(1).First(j)
 	if !ok {
 		return nil
 	}
@@ -330,8 +330,8 @@ func (op *Operation) ProcessZipJob(cb func(*ZipJob) bool) error {
 		return op.Operation.Err()
 	}
 
-	if cb(zj) {
-		op.Operation.Exec("DELETE FROM zip_jobs WHERE id = ?", zj.ID)
+	if cb(j) {
+		op.Operation.Exec("DELETE FROM archive_jobs WHERE id = ?", j.ID)
 		return op.Operation.Err()
 	}
 

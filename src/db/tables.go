@@ -61,10 +61,10 @@ func (f *File) ContainingFolder() string {
 	return filepath.Dir(f.PublicPath)
 }
 
-// The ZipJob structure maps to zip_jobs, storing RS-separated files and
+// The ArchiveJob structure maps to archive_jobs, storing RS-separated files and
 // comma-separated notification email(s).  The record represents a single
 // archive creation request.
-type ZipJob struct {
+type ArchiveJob struct {
 	ID                 int `sql:",primary"`
 	CreatedAt          time.Time
 	NotificationEmails string
@@ -74,12 +74,12 @@ type ZipJob struct {
 // Emails parses the email addresses as mail.Addr instances; errors are
 // ignored, as the database shouldn't get emails in any way other than from a
 // pre-validated email list
-func (zj *ZipJob) Emails() []*mail.Address {
-	var list, _ = mail.ParseAddressList(zj.NotificationEmails)
+func (j *ArchiveJob) Emails() []*mail.Address {
+	var list, _ = mail.ParseAddressList(j.NotificationEmails)
 	return list
 }
 
 // FileList splits the files field and returns them as a list
-func (zj *ZipJob) FileList() []string {
-	return strings.Split(zj.Files, "\x1E")
+func (j *ArchiveJob) FileList() []string {
+	return strings.Split(j.Files, "\x1E")
 }
