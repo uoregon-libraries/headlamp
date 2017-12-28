@@ -35,17 +35,23 @@ binary tarballs and exporting some environment variables, such as:
     goose up
     make
 
+### Prepare Settings
+
+Copy `settings_example` to `settings` and modify it as needed.  The comments in
+that file should clearly describe what each setting means, but more explanation
+for some of the indexer's settings can be found below.
+
 ### Index your data
 
 Run the indexer; this takes a few minutes for us on the first run, scanning
 about four million file entries.  The indexer runs forever, scanning for new
 files it hasn't yet indexed.
 
-    ./bin/index /mnt/dark-archive/ "project/date" "*/INVENTORY/*.csv"
+    ./bin/index settings
 
 ### Start the web server
 
-    ./bin/headlamp "http://some.site.example.com/" ":8080"
+    ./bin/headlamp settings
 
 Inventory Files
 ---
@@ -79,11 +85,11 @@ contains a comprehensive list of all other inventories as an easier way to do
 things like data-rot detection.
 
 Also note that the location of inventory files *must be consistent*.  When
-running the indexer, you must specify a pattern for finding these files
-relative to the dark archive root.  For instance, we might say our pattern
-above is `*/*/INVENTORY/*.csv` (assuming the dark archive root was
-`/path/to/dark-archive/`).  Though multiple indexers could be run to grab
-different patterns, it could become confusing to manage them.
+configuring the indexer, you must specify a pattern for finding these files
+relative to the dark archive root (`INVENTORY_FILE_GLOB`).  For instance, we
+might say our pattern above is `*/*/INVENTORY/*.csv` (assuming the dark archive
+root was `/path/to/dark-archive/`).  Though multiple indexers could be run to
+grab different patterns, it could become confusing to manage them.
 
 Directory Format
 ---
@@ -122,7 +128,7 @@ To explain through example, given the following:
 - The inventory files are at `*/INVENTORY/*.csv`; e.g., from the dark archive
   root, you might have `foo/INVENTORY/archive.csv`
 - A file defined in that inventory is `2017-12-08/baz/srs/FILES/blah.tiff`
-- The path format given to the indexer is `ignore/date/ignore/project`
+- The path format (`ARCHIVE_PATH_FORMAT` in your settings file) is `ignore/date/ignore/project`
 
 Then the following are true:
 
