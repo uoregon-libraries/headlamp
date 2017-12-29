@@ -98,6 +98,7 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 
 	var tw = tar.NewWriter(tempFile)
 
+	logger.Debugf("Adding files to archive")
 	for _, fname := range j.FileList() {
 		var p = filepath.Join(a.conf.DARoot, fname)
 		var fn = strings.Replace(fname, string(os.PathSeparator), "__", -1)
@@ -108,18 +109,21 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 		}
 	}
 
+	logger.Debugf("Closing archive")
 	err = tw.Close()
 	if err != nil {
 		logger.Errorf("Error closing tar stream %q: %s", tempName, err)
 		return false
 	}
 
+	logger.Debugf("Closing tempfile")
 	err = tempFile.Close()
 	if err != nil {
 		logger.Errorf("Error closing %q: %s", tempName, err)
 		return false
 	}
 
+	logger.Debugf("Generating new unique filename")
 	var newName string
 	newName, err = fileutil.TempNamedFile(a.conf.ArchiveOutputLocation, "archive-", ".tar")
 	if err != nil {
@@ -128,6 +132,7 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 	}
 	os.Remove(newName)
 
+	logger.Debugf("Renaming file (via os.Link)")
 	err = os.Link(tempName, newName)
 	if err != nil {
 		logger.Errorf("Error linking %q to %q: %s", tempName, newName, err)
