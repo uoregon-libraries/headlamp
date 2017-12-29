@@ -10,13 +10,15 @@ import (
 
 // Config is used to define the configuration for both the indexer and the web server
 type Config struct {
-	BindAddress      string `setting:"BIND_ADDRESS"`
-	WebPath          string `setting:"WEBPATH" type:"url"`
-	Approot          string `setting:"APPROOT" type:"path"`
-	DARoot           string `setting:"DARK_ARCHIVE_PATH" type:"path"`
-	PathFormat       []PathToken
-	PathFormatString string `setting:"ARCHIVE_PATH_FORMAT"`
-	InventoryPattern string `setting:"INVENTORY_FILE_GLOB"`
+	BindAddress           string `setting:"BIND_ADDRESS"`
+	WebPath               string `setting:"WEBPATH" type:"url"`
+	Approot               string `setting:"APPROOT" type:"path"`
+	DARoot                string `setting:"DARK_ARCHIVE_PATH" type:"path"`
+	PathFormat            []PathToken
+	PathFormatString      string `setting:"ARCHIVE_PATH_FORMAT"`
+	InventoryPattern      string `setting:"INVENTORY_FILE_GLOB"`
+	ArchiveOutputLocation string `setting:"ARCHIVE_OUTPUT_LOCATION" type:"path"`
+	ArchiveLifetimeDays   int    `setting:"ARCHIVE_LIFETIME_DAYS" type:"int"`
 }
 
 // Read opens the given file and reads its configuration
