@@ -51,7 +51,17 @@ files it hasn't yet indexed.
 
 ### Start the web server
 
+The web server listens on the configured port and allows people to browse,
+search, and queue up dark-archive data.
+
     ./bin/headlamp settings
+
+### Run the archiver
+
+The archiver runs forever, looking for queued archives to create as well as old
+archives which can be removed.
+
+    ./bin/archive settings
 
 Inventory Files
 ---
