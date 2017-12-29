@@ -13,6 +13,7 @@ func main() {
 
 	for {
 		a.RunPendingArchiveJobs()
+		a.CleanOldArchives()
 		time.Sleep(time.Minute * 5)
 	}
 }

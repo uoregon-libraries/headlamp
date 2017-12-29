@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/uoregon-libraries/gopkg/fileutil"
 	"github.com/uoregon-libraries/gopkg/logger"
@@ -34,6 +35,49 @@ func (a *Archiver) RunPendingArchiveJobs() {
 		if err != nil {
 			logger.Errorf("Unable to get next job: %s", err)
 			return
+		}
+	}
+}
+
+// CleanOldArchives looks for old archive files and removes them
+func (a *Archiver) CleanOldArchives() {
+	logger.Debugf("Scanning for old archives to remove")
+
+	var oldFiles, err = fileutil.FindIf(a.conf.ArchiveOutputLocation, func(i os.FileInfo) bool {
+		if !i.Mode().IsRegular() {
+			return false
+		}
+
+		var n = i.Name()
+		if !strings.HasSuffix(n, ".tar") {
+			return false
+		}
+
+		var hp = strings.HasPrefix
+		if !hp(n, ".wip-") && !hp(n, "archive-") {
+			return false
+		}
+
+		var archiveLifetime = time.Hour * 24 * time.Duration(a.conf.ArchiveLifetimeDays)
+		var timeSince = time.Since(i.ModTime())
+		if timeSince < archiveLifetime {
+			logger.Debugf("Skipping %q: too recently modified", n)
+			return false
+		}
+
+		return true
+	})
+
+	if err != nil {
+		logger.Errorf("Unable to find old archives to delete: %s", err)
+		return
+	}
+
+	for _, f := range oldFiles {
+		logger.Infof("Removing %q", f)
+		err = os.Remove(f)
+		if err != nil {
+			logger.Errorf("Unable to delete %q: %s", f, err)
 		}
 	}
 }

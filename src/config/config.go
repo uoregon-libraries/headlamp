@@ -18,6 +18,7 @@ type Config struct {
 	PathFormatString      string `setting:"ARCHIVE_PATH_FORMAT"`
 	InventoryPattern      string `setting:"INVENTORY_FILE_GLOB"`
 	ArchiveOutputLocation string `setting:"ARCHIVE_OUTPUT_LOCATION" type:"path"`
+	ArchiveLifetimeDays   int    `setting:"ARCHIVE_LIFETIME_DAYS" type:"int"`
 }
 
 // Read opens the given file and reads its configuration
