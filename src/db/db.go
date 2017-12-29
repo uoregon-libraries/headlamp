@@ -322,7 +322,7 @@ func (op *Operation) QueueArchiveJob(addrs []*mail.Address, files []*File) error
 // removed from the database.  If no job is found, the callback isn't run.
 func (op *Operation) ProcessArchiveJob(cb func(*ArchiveJob) bool) error {
 	var j = &ArchiveJob{}
-	var sel = op.ArchiveJobs.Select().Where("next_run_at < ? AND processed = ?", time.Now(), false)
+	var sel = op.ArchiveJobs.Select().Where("next_attempt_at < ? AND processed = ?", time.Now(), false)
 	var ok = sel.Order("created_at ASC").Limit(1).First(j)
 	if op.Operation.Err() != nil {
 		return op.Operation.Err()
