@@ -52,7 +52,13 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 
 	err = tw.Close()
 	if err != nil {
-		logger.Errorf("Error closing tar file %q: %s", tempFile.Name(), err)
+		logger.Errorf("Error closing tar stream %q: %s", tempFile.Name(), err)
+		return false
+	}
+
+	err = tempFile.Close()
+	if err != nil {
+		logger.Errorf("Error closing %q: %s", tempFile.Name(), err)
 		return false
 	}
 
