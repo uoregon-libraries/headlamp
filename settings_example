@@ -1,3 +1,5 @@
+# All settings can be overridden by environment variables prefixed with "HL_"
+
 # Bind address: where will Headlamp listen for connections?
 BIND_ADDRESS=":8080"
 

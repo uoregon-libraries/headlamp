@@ -24,6 +24,8 @@ type Config struct {
 // Read opens the given file and reads its configuration
 func Read(filename string) (*Config, error) {
 	var conf = bashconf.New()
+	conf.EnvironmentPrefix("HL_")
+
 	var err = conf.ParseFile(filename)
 	if err != nil {
 		return nil, err
