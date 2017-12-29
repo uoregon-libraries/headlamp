@@ -6,7 +6,10 @@ import (
 	"db"
 	"fmt"
 	"io"
+	"net/smtp"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -132,6 +135,16 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 	}
 	os.Remove(newName)
 
+	logger.Debugf("Notifying user(s) via email")
+	var to = j.Emails()
+	var archiveDownloadURL, _ = url.Parse(a.conf.WebPath)
+	archiveDownloadURL.Path = path.Join(archiveDownloadURL.Path, "archives", filepath.Base(newName))
+	err = a.notify(to, archiveDownloadURL.String())
+	if err != nil {
+		logger.Criticalf("Unable to notify %q of archive %q being ready: %s", to, archiveDownloadURL, err)
+		return false
+	}
+
 	logger.Debugf("Renaming file (via os.Link)")
 	err = os.Link(tempName, newName)
 	if err != nil {
@@ -167,4 +180,11 @@ func addFileToTar(tw *tar.Writer, filePath, flatname string) error {
 	}
 
 	return nil
+}
+
+func (a *Archiver) notify(to []string, fileURL string) error {
+	var auth = smtp.PlainAuth("", a.conf.SMTPUser, a.conf.SMTPPass, a.conf.SMTPHost)
+	var msg = fmt.Sprintf("Subject: Your archive is ready\r\n\r\nDownload your Headlamp archive at %s\r\n", fileURL)
+	var server = fmt.Sprintf("%s:%d", a.conf.SMTPHost, a.conf.SMTPPort)
+	return smtp.SendMail(server, auth, a.conf.SMTPUser, to, []byte(msg))
 }

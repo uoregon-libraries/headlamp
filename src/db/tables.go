@@ -71,12 +71,21 @@ type ArchiveJob struct {
 	Files              string
 }
 
-// Emails parses the email addresses as mail.Addr instances; errors are
-// ignored, as the database shouldn't get emails in any way other than from a
-// pre-validated email list
-func (j *ArchiveJob) Emails() []*mail.Address {
-	var list, _ = mail.ParseAddressList(j.NotificationEmails)
-	return list
+// Emails parses the email addresses as mail.Addr instances and returns them as
+// a list of strings, ensuring the strings are split properly in cases where
+// the email addressee has a comma in the name, e.g.:
+//
+//     "John Doe, III" <jdoeiii@example.org>, Alice <alice@example.org>
+//
+// Errors are ignored, as the database shouldn't get emails in any way other
+// than from a pre-validated email list
+func (j *ArchiveJob) Emails() []string {
+	var eList, _ = mail.ParseAddressList(j.NotificationEmails)
+	var sList = make([]string, len(eList))
+	for i, e := range eList {
+		sList[i] = e.String()
+	}
+	return sList
 }
 
 // FileList splits the files field and returns them as a list

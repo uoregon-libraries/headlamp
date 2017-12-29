@@ -1,4 +1,8 @@
 # All settings can be overridden by environment variables prefixed with "HL_"
+#
+# e.g., SMTP_PASS could be blank in this file, but set via this command:
+#
+#     export HL_SMTP_PASS=blah
 
 # Bind address: where will Headlamp listen for connections?
 BIND_ADDRESS=":8080"
@@ -43,3 +47,9 @@ ARCHIVE_OUTPUT_LOCATION="/tmp"
 # Archive lifetime in days - this many days after a generated archive was last
 # touched, it will be removed
 ARCHIVE_LIFETIME_DAYS=7
+
+# SMTP settings for sending mail
+SMTP_USER="user@example.org"
+SMTP_PASS="s3krit"
+SMTP_HOST="mail.example.org"
+SMTP_PORT=25

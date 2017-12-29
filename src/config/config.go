@@ -19,6 +19,10 @@ type Config struct {
 	InventoryPattern      string `setting:"INVENTORY_FILE_GLOB"`
 	ArchiveOutputLocation string `setting:"ARCHIVE_OUTPUT_LOCATION" type:"path"`
 	ArchiveLifetimeDays   int    `setting:"ARCHIVE_LIFETIME_DAYS" type:"int"`
+	SMTPUser              string `setting:"SMTP_USER"`
+	SMTPPass              string `setting:"SMTP_PASS"`
+	SMTPHost              string `setting:"SMTP_HOST"`
+	SMTPPort              int    `setting:"SMTP_PORT" type:"int"`
 }
 
 // Read opens the given file and reads its configuration

@@ -58,6 +58,10 @@ func startServer() *http.Server {
 	var staticPrefix = basePath + "/static/"
 	mux.Handle(staticPrefix, http.StripPrefix(staticPrefix, fileServer))
 
+	var archiveServer = http.FileServer(http.Dir(conf.ArchiveOutputLocation))
+	var archiveServerPrefix = basePath + "/archives/"
+	mux.Handle(archiveServerPrefix, http.StripPrefix(archiveServerPrefix, archiveServer))
+
 	if basePath == "" {
 		basePath = "/"
 	}
