@@ -41,8 +41,9 @@ ARCHIVE_PATH_FORMAT="ignore/project/date"
 INVENTORY_FILE_GLOB="*/*/INVENTORY/*.csv"
 
 # Archive output location: location we drop off files for users who create a
-# bulk-download archive
-ARCHIVE_OUTPUT_LOCATION="/tmp"
+# bulk-download archive.  Make sure this location is one you don't mind the web
+# server exposing to anybody who has access to the site!
+ARCHIVE_OUTPUT_LOCATION="/tmp/archives"
 
 # Archive lifetime in days - this many days after a generated archive was last
 # touched, it will be removed
