@@ -67,8 +67,10 @@ func (f *File) ContainingFolder() string {
 type ArchiveJob struct {
 	ID                 int `sql:",primary"`
 	CreatedAt          time.Time
+	NextAttemptAt      time.Time
 	NotificationEmails string
 	Files              string
+	Processed          bool
 }
 
 // Emails parses the email addresses as mail.Addr instances and returns them as
