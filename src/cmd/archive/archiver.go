@@ -92,6 +92,10 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 		return false
 	}
 
+	// Most failures are before the rename, so this helps reduce chances of
+	// leaving orphaned files around
+	defer os.Remove(tempName)
+
 	var tw = tar.NewWriter(tempFile)
 
 	for _, fname := range j.FileList() {
@@ -116,10 +120,17 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 		return false
 	}
 
-	var newName = strings.Replace(tempName, ".wip-", "archive-", 1)
-	err = os.Rename(tempName, newName)
+	var newName string
+	newName, err = fileutil.TempNamedFile(a.conf.ArchiveOutputLocation, "archive-", ".tar")
 	if err != nil {
-		logger.Errorf("Error renaming %q to %q: %s", tempName, newName, err)
+		logger.Errorf("Unable to create second temp archive: %s", err)
+		return false
+	}
+	os.Remove(newName)
+
+	err = os.Link(tempName, newName)
+	if err != nil {
+		logger.Errorf("Error linking %q to %q: %s", tempName, newName, err)
 		return false
 	}
 
