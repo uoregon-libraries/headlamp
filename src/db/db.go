@@ -324,11 +324,11 @@ func (op *Operation) ProcessArchiveJob(cb func(*ArchiveJob) bool) error {
 	var j = &ArchiveJob{}
 	var sel = op.ArchiveJobs.Select().Where("next_run_at < ? AND processed = ?", time.Now(), false)
 	var ok = sel.Order("created_at ASC").Limit(1).First(j)
-	if !ok {
-		return nil
-	}
 	if op.Operation.Err() != nil {
 		return op.Operation.Err()
+	}
+	if !ok {
+		return nil
 	}
 
 	if cb(j) {
