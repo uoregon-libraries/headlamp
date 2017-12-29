@@ -42,6 +42,7 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 	logger.Infof("Processing archive job %d", j.ID)
 
 	var tempFile, err = fileutil.TempFile(a.conf.ArchiveOutputLocation, ".wip-", ".tar")
+	var tempName = tempFile.Name()
 	if err != nil {
 		logger.Errorf("Unable to create temp archive: %s", err)
 		return false
@@ -61,13 +62,20 @@ func (a *Archiver) processArchiveJob(j *db.ArchiveJob) bool {
 
 	err = tw.Close()
 	if err != nil {
-		logger.Errorf("Error closing tar stream %q: %s", tempFile.Name(), err)
+		logger.Errorf("Error closing tar stream %q: %s", tempName, err)
 		return false
 	}
 
 	err = tempFile.Close()
 	if err != nil {
-		logger.Errorf("Error closing %q: %s", tempFile.Name(), err)
+		logger.Errorf("Error closing %q: %s", tempName, err)
+		return false
+	}
+
+	var newName = strings.Replace(tempName, ".wip-", "archive-", 1)
+	err = os.Rename(tempName, newName)
+	if err != nil {
+		logger.Errorf("Error renaming %q to %q: %s", tempName, newName, err)
 		return false
 	}
 
