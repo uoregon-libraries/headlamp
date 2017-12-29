@@ -33,3 +33,7 @@ ARCHIVE_PATH_FORMAT="ignore/project/date"
 # project/date/bar/baz.tiff.  Note that "manifest.csv" is automatically skipped
 # as those files are always our composite inventories.
 INVENTORY_FILE_GLOB="*/*/INVENTORY/*.csv"
+
+# Archive output location: location we drop off files for users who create a
+# bulk-download archive
+ARCHIVE_OUTPUT_LOCATION="/tmp"
