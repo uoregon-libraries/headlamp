@@ -12,7 +12,7 @@ func main() {
 	}
 
 	for {
-		a.RunNextArchiveJob()
-		time.Sleep(time.Minute)
+		a.RunPendingArchiveJobs()
+		time.Sleep(time.Minute * 5)
 	}
 }

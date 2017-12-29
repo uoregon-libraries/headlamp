@@ -20,12 +20,21 @@ type Archiver struct {
 	dbh  *db.Database
 }
 
-// RunNextArchiveJob grabs the longest-waiting job and processes it
-func (a *Archiver) RunNextArchiveJob() {
+// RunPendingArchiveJobs grabs the longest-waiting job and processes it
+func (a *Archiver) RunPendingArchiveJobs() {
 	logger.Debugf("Scanning for pending archive jobs")
-	var err = a.dbh.Operation().ProcessArchiveJob(a.processArchiveJob)
-	if err != nil {
-		logger.Errorf("Unable to get next job: %s", err)
+	var pending = true
+	for pending {
+		pending = false
+		var err = a.dbh.Operation().ProcessArchiveJob(func(j *db.ArchiveJob) bool {
+			pending = true
+			return a.processArchiveJob(j)
+		})
+
+		if err != nil {
+			logger.Errorf("Unable to get next job: %s", err)
+			return
+		}
 	}
 }
 
