@@ -44,8 +44,8 @@ for some of the indexer's settings can be found below.
 ### Index your data
 
 Run the indexer; this takes a few minutes for us on the first run, scanning
-about four million file entries.  The indexer runs forever, scanning for new
-files it hasn't yet indexed.
+about four million file entries.  The indexer will then run until canceled,
+scanning for new inventory files which haven't been indexed.
 
     ./bin/index settings
 
