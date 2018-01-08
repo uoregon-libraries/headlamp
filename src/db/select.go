@@ -19,13 +19,13 @@ type FSelect struct {
 }
 
 // FileSelect creates a new FSelect for querying/searching files
-func (op *Operation) FileSelect(p *Category, f *Folder) *FSelect {
-	return &FSelect{op: op, sel: op.Files.Select(), category: p, folder: f}
+func (op *Operation) FileSelect(c *Category, f *Folder) *FSelect {
+	return &FSelect{op: op, sel: op.Files.Select(), category: c, folder: f}
 }
 
 // FolderSelect creates a new FSelect for querying/searching folders
-func (op *Operation) FolderSelect(p *Category, f *Folder) *FSelect {
-	return &FSelect{op: op, sel: op.Folders.Select(), category: p, folder: f}
+func (op *Operation) FolderSelect(c *Category, f *Folder) *FSelect {
+	return &FSelect{op: op, sel: op.Folders.Select(), category: c, folder: f}
 }
 
 // TreeMode defaults to false, but if set to true will recurse through all

@@ -14,11 +14,11 @@ func (i *indexerOperation) findOrCreateCategory(pName string) (*category, error)
 	defer i.Unlock()
 
 	if i.categories[pName] == nil {
-		var p, err = i.op.FindOrCreateCategory(pName)
+		var c, err = i.op.FindOrCreateCategory(pName)
 		if err != nil {
 			return nil, fmt.Errorf("couldn't create category %q: %s", pName, err)
 		}
-		i.categories[pName] = &category{Category: p, folders: make(map[string]*db.Folder)}
+		i.categories[pName] = &category{Category: c, folders: make(map[string]*db.Folder)}
 	}
 
 	return i.categories[pName], nil
@@ -29,21 +29,21 @@ func (i *indexerOperation) findOrCreateCategory(pName string) (*category, error)
 // returned, aborting whatever folders were still needing to be built, if any.
 //
 // The first two levels of folders are cached for reuse.
-func (i *indexerOperation) processFolderPaths(p *category, folders []string) (*db.Folder, error) {
+func (i *indexerOperation) processFolderPaths(c *category, folders []string) (*db.Folder, error) {
 	var fullPath string
 	var folder, parentFolder *db.Folder
 
 	for level, fName := range folders {
 		fullPath = filepath.Join(fullPath, fName)
-		folder = p.folders[fullPath]
+		folder = c.folders[fullPath]
 		if folder == nil {
 			var err error
-			folder, err = i.op.FindOrCreateFolder(p.Category, parentFolder, fullPath)
+			folder, err = i.op.FindOrCreateFolder(c.Category, parentFolder, fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("couldn't build folder %q: %s", fullPath, err)
 			}
 			if level <= 2 {
-				p.folders[fullPath] = folder
+				c.folders[fullPath] = folder
 			}
 		}
 		parentFolder = folder
@@ -54,7 +54,7 @@ func (i *indexerOperation) processFolderPaths(p *category, folders []string) (*d
 	return parentFolder, nil
 }
 
-func (p *category) buildFile(i *db.Inventory, f *db.Folder, r fileRecord) *db.File {
+func (c *category) buildFile(i *db.Inventory, f *db.Folder, r fileRecord) *db.File {
 	var fid = 0
 	if f != nil {
 		fid = f.ID
@@ -62,8 +62,8 @@ func (p *category) buildFile(i *db.Inventory, f *db.Folder, r fileRecord) *db.Fi
 
 	var _, fname = filepath.Split(r.fullPath)
 	return &db.File{
-		Category:    p.Category,
-		CategoryID:  p.Category.ID,
+		Category:    c.Category,
+		CategoryID:  c.Category.ID,
 		Inventory:   i,
 		InventoryID: i.ID,
 		Folder:      f,

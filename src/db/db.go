@@ -132,9 +132,9 @@ func (op *Operation) FindOrCreateCategory(name string) (*Category, error) {
 }
 
 // FindFolderByPath looks for a folder with the given path under the given category
-func (op *Operation) FindFolderByPath(p *Category, path string) (*Folder, error) {
+func (op *Operation) FindFolderByPath(c *Category, path string) (*Folder, error) {
 	var folder = &Folder{}
-	var ok = op.Folders.Select().Where("category_id = ? AND public_path = ?", p.ID, path).First(folder)
+	var ok = op.Folders.Select().Where("category_id = ? AND public_path = ?", c.ID, path).First(folder)
 	if !ok {
 		folder = nil
 	}
@@ -142,12 +142,12 @@ func (op *Operation) FindFolderByPath(p *Category, path string) (*Folder, error)
 }
 
 // FindOrCreateFolder centralizes the creation and DB-save operation for folders
-func (op *Operation) FindOrCreateFolder(p *Category, f *Folder, path string) (*Folder, error) {
+func (op *Operation) FindOrCreateFolder(c *Category, f *Folder, path string) (*Folder, error) {
 	var parentFolderID = 0
 	if f != nil {
 		parentFolderID = f.ID
 	}
-	var folder, err = op.FindFolderByPath(p, path)
+	var folder, err = op.FindFolderByPath(c, path)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (op *Operation) FindOrCreateFolder(p *Category, f *Folder, path string) (*F
 			return nil, fmt.Errorf("existing record with different parent found")
 		}
 		folder.Folder = f
-		folder.Category = p
+		folder.Category = c
 		return folder, nil
 	}
 
@@ -164,8 +164,8 @@ func (op *Operation) FindOrCreateFolder(p *Category, f *Folder, path string) (*F
 	var newFolder = Folder{
 		Folder:     f,
 		FolderID:   parentFolderID,
-		Category:   p,
-		CategoryID: p.ID,
+		Category:   c,
+		CategoryID: c.ID,
 		Depth:      strings.Count(path, string(os.PathSeparator)),
 		PublicPath: path,
 		Name:       filename,
@@ -238,8 +238,8 @@ func (op *Operation) PopulateCategories(files []*File, folders []*Folder) error 
 	if err != nil {
 		return err
 	}
-	for _, p := range categoryList {
-		categoryLookup[p.ID] = p
+	for _, c := range categoryList {
+		categoryLookup[c.ID] = c
 	}
 	for _, f := range files {
 		f.Category = categoryLookup[f.CategoryID]
