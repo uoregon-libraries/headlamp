@@ -18,12 +18,12 @@ import (
 	"github.com/uoregon-libraries/gopkg/logger"
 )
 
-// project wraps db.Project, extending it with a cache of the top- and
+// category wraps db.Category, extending it with a cache of the top- and
 // second-level folders so we avoid the majority of DB hits without holding
 // onto absurd quantites of data in cases where the folder structure is
 // unusually deep
-type project struct {
-	*db.Project
+type category struct {
+	*db.Category
 
 	folders map[string]*db.Folder
 }
@@ -36,15 +36,15 @@ const (
 )
 
 // Indexer controls how we find inventory files, which part(s) of the path are
-// skipped, and which part of the path defines a project name.
+// skipped, and which part of the path defines a category name.
 type Indexer struct {
 	sync.Mutex
 	dbh *db.Database
 	c   *config.Config
 
-	// projects keeps a cache of all projects, keyed by the name, to avoid
+	// categories keeps a cache of all categories, keyed by the name, to avoid
 	// millions of unnecessary lookups in the db
-	projects map[string]*project
+	categories map[string]*category
 
 	// seenInventoryFiles caches the files we've processed in the past so we
 	// don't hit the DB each time we're looking at a new inventory file
@@ -67,7 +67,7 @@ type indexerOperation struct {
 
 // New sets up a scanner for use in indexing dark-archive file data
 func New(dbh *db.Database, conf *config.Config) *Indexer {
-	return &Indexer{dbh: dbh, c: conf, projects: make(map[string]*project)}
+	return &Indexer{dbh: dbh, c: conf, categories: make(map[string]*category)}
 }
 
 // Index searches for inventory files not previously seen and indexes the files
@@ -198,12 +198,12 @@ func (i *Indexer) seenInventoryFile(fname string) bool {
 }
 
 type fileRecord struct {
-	checksum    string
-	filesize    int64
-	projectName string
-	archiveDate string
-	fullPath    string
-	publicPath  string
+	checksum     string
+	filesize     int64
+	categoryName string
+	archiveDate  string
+	fullPath     string
+	publicPath   string
 }
 
 var emptyFR fileRecord
@@ -285,12 +285,12 @@ func (i *Indexer) parseFileRecord(inventoryFile string, index int, record []byte
 	var publicPath string
 	pathParts, publicPath = pathParts[:partCount-1], pathParts[partCount-1]
 
-	// Pull the date and project name from the collapsed path elements
-	var projectName, dateDir string
+	// Pull the date and category name from the collapsed path elements
+	var categoryName, dateDir string
 	for index, part := range pathParts {
 		switch i.c.PathFormat[index] {
-		case config.Project:
-			projectName = part
+		case config.Category:
+			categoryName = part
 		case config.Date:
 			dateDir = part
 		}
@@ -305,10 +305,10 @@ func (i *Indexer) parseFileRecord(inventoryFile string, index int, record []byte
 
 	var checksum = string(recParts[0])
 	return fileRecord{checksum: checksum,
-		filesize:    filesize,
-		projectName: projectName,
-		archiveDate: dateDir,
-		fullPath:    fullPath,
-		publicPath:  publicPath,
+		filesize:     filesize,
+		categoryName: categoryName,
+		archiveDate:  dateDir,
+		fullPath:     fullPath,
+		publicPath:   publicPath,
 	}
 }

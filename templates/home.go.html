@@ -4,11 +4,11 @@
 <p><strong>Note that top-level searches can be extremely slow!</strong></p>
 {{template "searchForm" .}}
 
-<h2>Browse Projects</h2>
+<h2>Browse Categories</h2>
 
-<div class="row projects">
-{{range .Projects}}
-  <div class="col-md-4 project"><a href="{{BrowseProjectPath .}}">{{.Name}}</a></div>
+<div class="row categories">
+{{range .Categories}}
+  <div class="col-md-4 category"><a href="{{BrowseCategoryPath .}}">{{.Name}}</a></div>
 {{end}}
 </div>
 

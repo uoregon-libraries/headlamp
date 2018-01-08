@@ -10,7 +10,7 @@ import (
 type FSelect struct {
 	op          *Operation
 	sel         magicsql.Select
-	project     *Project
+	category    *Category
 	folder      *Folder
 	whereFields []string
 	whereArgs   []interface{}
@@ -19,17 +19,17 @@ type FSelect struct {
 }
 
 // FileSelect creates a new FSelect for querying/searching files
-func (op *Operation) FileSelect(p *Project, f *Folder) *FSelect {
-	return &FSelect{op: op, sel: op.Files.Select(), project: p, folder: f}
+func (op *Operation) FileSelect(p *Category, f *Folder) *FSelect {
+	return &FSelect{op: op, sel: op.Files.Select(), category: p, folder: f}
 }
 
 // FolderSelect creates a new FSelect for querying/searching folders
-func (op *Operation) FolderSelect(p *Project, f *Folder) *FSelect {
-	return &FSelect{op: op, sel: op.Folders.Select(), project: p, folder: f}
+func (op *Operation) FolderSelect(p *Category, f *Folder) *FSelect {
+	return &FSelect{op: op, sel: op.Folders.Select(), category: p, folder: f}
 }
 
 // TreeMode defaults to false, but if set to true will recurse through all
-// subdirectories instead of limiting the search to the precise project and
+// subdirectories instead of limiting the search to the precise category and
 // folder passed into the constructor
 func (s *FSelect) TreeMode(t bool) *FSelect {
 	s.tree = t
@@ -49,7 +49,7 @@ func (s *FSelect) Limit(l uint64) *FSelect {
 	return s
 }
 
-func (s *FSelect) setProject(data interface{}) {
+func (s *FSelect) setCategory(data interface{}) {
 	var files []*File
 	var folders []*Folder
 	switch fList := data.(type) {
@@ -59,17 +59,17 @@ func (s *FSelect) setProject(data interface{}) {
 		folders = *fList
 	}
 
-	// if Project was blank, pull project via IDs
-	if s.project == nil {
-		s.op.PopulateProjects(files, folders)
+	// if Category was blank, pull category via IDs
+	if s.category == nil {
+		s.op.PopulateCategories(files, folders)
 		return
 	}
 
 	for _, f := range files {
-		f.Project = s.project
+		f.Category = s.category
 	}
 	for _, f := range folders {
-		f.Project = s.project
+		f.Category = s.category
 	}
 }
 
@@ -78,9 +78,9 @@ func (s *FSelect) setProject(data interface{}) {
 // objects found via a COUNT query if Limit was set in order to know if more
 // objects were available.
 func (s *FSelect) AllObjects(data interface{}) (total uint64, err error) {
-	if s.project != nil {
-		s.whereFields = append(s.whereFields, "project_id = ?")
-		s.whereArgs = append(s.whereArgs, s.project.ID)
+	if s.category != nil {
+		s.whereFields = append(s.whereFields, "category_id = ?")
+		s.whereArgs = append(s.whereArgs, s.category.ID)
 	}
 	if s.tree == false {
 		var folderID int
@@ -102,6 +102,6 @@ func (s *FSelect) AllObjects(data interface{}) (total uint64, err error) {
 	var count = sel.Count().RowCount()
 	sel.AllObjects(data)
 
-	s.setProject(data)
+	s.setCategory(data)
 	return count, s.op.Operation.Err()
 }

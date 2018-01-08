@@ -20,7 +20,7 @@ type Database struct {
 	dbh           *magicsql.DB
 	mtFiles       *magicsql.MagicTable
 	mtFolders     *magicsql.MagicTable
-	mtProjects    *magicsql.MagicTable
+	mtCategories  *magicsql.MagicTable
 	mtInventories *magicsql.MagicTable
 	mtArchiveJobs *magicsql.MagicTable
 }
@@ -32,7 +32,7 @@ type Operation struct {
 	Files       *magicsql.OperationTable
 	Folders     *magicsql.OperationTable
 	Inventories *magicsql.OperationTable
-	Projects    *magicsql.OperationTable
+	Categories  *magicsql.OperationTable
 	ArchiveJobs *magicsql.OperationTable
 }
 
@@ -47,7 +47,7 @@ func New() *Database {
 		dbh:           magicsql.Wrap(_db),
 		mtFiles:       magicsql.Table("files", &File{}),
 		mtFolders:     magicsql.Table("folders", &Folder{}),
-		mtProjects:    magicsql.Table("projects", &Project{}),
+		mtCategories:  magicsql.Table("categories", &Category{}),
 		mtInventories: magicsql.Table("inventories", &Inventory{}),
 		mtArchiveJobs: magicsql.Table("archive_jobs", &ArchiveJob{}),
 	}
@@ -61,7 +61,7 @@ func (db *Database) Operation() *Operation {
 		Files:       magicOp.OperationTable(db.mtFiles),
 		Folders:     magicOp.OperationTable(db.mtFolders),
 		Inventories: magicOp.OperationTable(db.mtInventories),
-		Projects:    magicOp.OperationTable(db.mtProjects),
+		Categories:  magicOp.OperationTable(db.mtCategories),
 		ArchiveJobs: magicOp.OperationTable(db.mtArchiveJobs),
 	}
 }
@@ -101,40 +101,40 @@ func (op *Operation) WriteInventory(i *Inventory) error {
 	return op.Operation.Err()
 }
 
-// AllProjects returns all projects which have been seen
-func (op *Operation) AllProjects() ([]*Project, error) {
-	var projects []*Project
-	op.Projects.Select().Order("LOWER(name)").AllObjects(&projects)
-	return projects, op.Operation.Err()
+// AllCategories returns all categories which have been seen
+func (op *Operation) AllCategories() ([]*Category, error) {
+	var categories []*Category
+	op.Categories.Select().Order("LOWER(name)").AllObjects(&categories)
+	return categories, op.Operation.Err()
 }
 
-// FindProjectByName returns a project if one exists with the given name, and
+// FindCategoryByName returns a category if one exists with the given name, and
 // the database error if any occurred
-func (op *Operation) FindProjectByName(name string) (*Project, error) {
-	var project = &Project{}
-	var ok = op.Projects.Select().Where("name = ?", name).First(project)
+func (op *Operation) FindCategoryByName(name string) (*Category, error) {
+	var category = &Category{}
+	var ok = op.Categories.Select().Where("name = ?", name).First(category)
 	if !ok {
-		project = nil
+		category = nil
 	}
-	return project, op.Operation.Err()
+	return category, op.Operation.Err()
 }
 
-// FindOrCreateProject stores (or finds) the project by the given name and
-// returns it.  If there are any database errors, they're returned and Project
+// FindOrCreateCategory stores (or finds) the category by the given name and
+// returns it.  If there are any database errors, they're returned and Category
 // will be undefined.
-func (op *Operation) FindOrCreateProject(name string) (*Project, error) {
-	var project, err = op.FindProjectByName(name)
-	if project == nil && err == nil {
-		project = &Project{Name: name}
-		op.Projects.Save(project)
+func (op *Operation) FindOrCreateCategory(name string) (*Category, error) {
+	var category, err = op.FindCategoryByName(name)
+	if category == nil && err == nil {
+		category = &Category{Name: name}
+		op.Categories.Save(category)
 	}
-	return project, op.Operation.Err()
+	return category, op.Operation.Err()
 }
 
-// FindFolderByPath looks for a folder with the given path under the given project
-func (op *Operation) FindFolderByPath(p *Project, path string) (*Folder, error) {
+// FindFolderByPath looks for a folder with the given path under the given category
+func (op *Operation) FindFolderByPath(p *Category, path string) (*Folder, error) {
 	var folder = &Folder{}
-	var ok = op.Folders.Select().Where("project_id = ? AND public_path = ?", p.ID, path).First(folder)
+	var ok = op.Folders.Select().Where("category_id = ? AND public_path = ?", p.ID, path).First(folder)
 	if !ok {
 		folder = nil
 	}
@@ -142,7 +142,7 @@ func (op *Operation) FindFolderByPath(p *Project, path string) (*Folder, error) 
 }
 
 // FindOrCreateFolder centralizes the creation and DB-save operation for folders
-func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Folder, error) {
+func (op *Operation) FindOrCreateFolder(p *Category, f *Folder, path string) (*Folder, error) {
 	var parentFolderID = 0
 	if f != nil {
 		parentFolderID = f.ID
@@ -156,7 +156,7 @@ func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Fo
 			return nil, fmt.Errorf("existing record with different parent found")
 		}
 		folder.Folder = f
-		folder.Project = p
+		folder.Category = p
 		return folder, nil
 	}
 
@@ -164,8 +164,8 @@ func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Fo
 	var newFolder = Folder{
 		Folder:     f,
 		FolderID:   parentFolderID,
-		Project:    p,
-		ProjectID:  p.ID,
+		Category:   p,
+		CategoryID: p.ID,
 		Depth:      strings.Count(path, string(os.PathSeparator)),
 		PublicPath: path,
 		Name:       filename,
@@ -174,47 +174,47 @@ func (op *Operation) FindOrCreateFolder(p *Project, f *Folder, path string) (*Fo
 	return &newFolder, op.Operation.Err()
 }
 
-// GetFolders returns all folders with the given project and parent folder.  A
+// GetFolders returns all folders with the given category and parent folder.  A
 // parent folder of nil can be used to pull all top-level folders.
-func (op *Operation) GetFolders(project *Project, folder *Folder) ([]*Folder, error) {
-	var sel = op.FolderSelect(project, folder)
+func (op *Operation) GetFolders(category *Category, folder *Folder) ([]*Folder, error) {
+	var sel = op.FolderSelect(category, folder)
 	var folders []*Folder
 	var _, err = sel.AllObjects(&folders)
 	return folders, err
 }
 
-// GetFiles returns all files with the given project and parent folder.  A
+// GetFiles returns all files with the given category and parent folder.  A
 // parent folder of nil can be used to pull all top-level files.
-func (op *Operation) GetFiles(project *Project, folder *Folder, limit uint64) ([]*File, uint64, error) {
-	var sel = op.FileSelect(project, folder).Limit(limit)
+func (op *Operation) GetFiles(category *Category, folder *Folder, limit uint64) ([]*File, uint64, error) {
+	var sel = op.FileSelect(category, folder).Limit(limit)
 	var files []*File
 	var count, err = sel.AllObjects(&files)
 	return files, count, err
 }
 
 // SearchFiles finds all files which are *descendents* of the given
-// project/folder and match the term
+// category/folder and match the term
 //
 // Note that folder data is *not* filled in on the returns files.  Pulling
 // folders from the database is unnecessary since all folder lookups are via
 // path, so this reduces the amount of information we pull from the database
 // and simplifies the code quite a bit.
-func (op *Operation) SearchFiles(project *Project, folder *Folder, term string, limit uint64) ([]*File, uint64, error) {
-	var sel = op.FileSelect(project, folder).TreeMode(true).Search("public_path LIKE ?", term).Limit(limit)
+func (op *Operation) SearchFiles(category *Category, folder *Folder, term string, limit uint64) ([]*File, uint64, error) {
+	var sel = op.FileSelect(category, folder).TreeMode(true).Search("public_path LIKE ?", term).Limit(limit)
 	var files []*File
 	var count, err = sel.AllObjects(&files)
 	return files, count, err
 }
 
 // SearchFolders finds all folders which are *descendents* of the given
-// project/folder and match the term
+// category/folder and match the term
 //
 // Note that parent folder data is *not* filled in on the returns files.
 // Pulling folders from the database is unnecessary since all folder lookups
 // are via path, so this reduces the amount of information we pull from the
 // database and simplifies the code quite a bit.
-func (op *Operation) SearchFolders(project *Project, folder *Folder, term string, limit uint64) ([]*Folder, uint64, error) {
-	var sel = op.FolderSelect(project, folder).TreeMode(true).Search("name LIKE ?", term).Limit(limit)
+func (op *Operation) SearchFolders(category *Category, folder *Folder, term string, limit uint64) ([]*Folder, uint64, error) {
+	var sel = op.FolderSelect(category, folder).TreeMode(true).Search("name LIKE ?", term).Limit(limit)
 	var folders []*Folder
 	var count, err = sel.AllObjects(&folders)
 	return folders, count, err
@@ -231,21 +231,21 @@ func (op *Operation) FindFileByID(id uint64) (*File, error) {
 	return file, op.Operation.Err()
 }
 
-// PopulateProjects fills in the project data for all passed-in files and folders
-func (op *Operation) PopulateProjects(files []*File, folders []*Folder) error {
-	var projectLookup = make(map[int]*Project)
-	var projectList, err = op.AllProjects()
+// PopulateCategories fills in the category data for all passed-in files and folders
+func (op *Operation) PopulateCategories(files []*File, folders []*Folder) error {
+	var categoryLookup = make(map[int]*Category)
+	var categoryList, err = op.AllCategories()
 	if err != nil {
 		return err
 	}
-	for _, p := range projectList {
-		projectLookup[p.ID] = p
+	for _, p := range categoryList {
+		categoryLookup[p.ID] = p
 	}
 	for _, f := range files {
-		f.Project = projectLookup[f.ProjectID]
+		f.Category = categoryLookup[f.CategoryID]
 	}
 	for _, f := range folders {
-		f.Project = projectLookup[f.ProjectID]
+		f.Category = categoryLookup[f.CategoryID]
 	}
 	return nil
 }
@@ -285,7 +285,7 @@ func (op *Operation) GetFilesByIDs(ids []uint64) ([]*File, error) {
 		return strings.ToLower(files[i].PublicPath) < strings.ToLower(files[j].PublicPath)
 	})
 
-	op.PopulateProjects(files, nil)
+	op.PopulateCategories(files, nil)
 	return files, op.Operation.Err()
 }
 

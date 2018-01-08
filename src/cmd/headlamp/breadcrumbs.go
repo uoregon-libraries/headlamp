@@ -41,20 +41,20 @@ func (c *breadCrumbs) nav() template.HTML {
 	return template.HTML(wrapperOpen + strings.Join(crumbStrings, "") + wrapperClose)
 }
 
-// breadcrumbs displays the project (if any) and each path element of the
+// breadcrumbs displays the category (if any) and each path element of the
 // current folder (if any), each as a clickable location for easier navigation
-func breadcrumbs(p *db.Project, f *db.Folder) template.HTML {
+func breadcrumbs(p *db.Category, f *db.Folder) template.HTML {
 	if p == nil {
 		return template.HTML("")
 	}
 
 	var crumbs = &breadCrumbs{}
-	crumbs.add(p.Name, browseProjectPath(p))
+	crumbs.add(p.Name, browseCategoryPath(p))
 	var folderPathParts []string
 	if f != nil {
 		folderPathParts = strings.Split(f.PublicPath, string(os.PathSeparator))
 	}
-	var dummyFolder = &db.Folder{Project: p}
+	var dummyFolder = &db.Folder{Category: p}
 	for _, part := range folderPathParts {
 		dummyFolder.PublicPath = filepath.Join(dummyFolder.PublicPath, part)
 		crumbs.add(part, browseFolderPath(dummyFolder))

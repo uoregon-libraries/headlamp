@@ -85,9 +85,9 @@ everything after that second comma is the filename.
 
 The filename itself is a relative path from the *parent* of the directory which
 contained the inventory file.  So in our world, we might have
-`/path/to/dark-archive/foo/projectname/INVENTORY/Archive-2017-12-08.csv`.  The
+`/path/to/dark-archive/foo/categoryname/INVENTORY/Archive-2017-12-08.csv`.  The
 files described therein would be found relative to
-`/path/to/dark-archive/foo/projectname`.
+`/path/to/dark-archive/foo/categoryname`.
 
 As a special case, Headlamp will **not process or look at or even offer a
 friendly wave to** any files called `manifest.csv`!  That file, for UO,
@@ -115,21 +115,21 @@ path elements.  e.g., we might have a filename of
 `FILES/385_foo_bar.tiff`, but adding the date makes the "send stuff to dark
 archive" scripting far simpler.
 
-We additionally expect every file to live under a project of some kind.  For
+We additionally expect every file to live under a category of some kind.  For
 telling the indexer how to find files, there are a few key points here:
 
 - All files' "real" paths are the full path to the file *minus* the dark archive root
-- All files must have a project name in their full path somewhere
+- All files must have a category name in their full path somewhere
 - All files must have a path element in the format of YYYY-MM-DD denoting the archive date
 
 When presenting data to the end user, we felt that we needed to prioritize the
-project name, making it act as a top-level element.  We also ignore the archive
+category name, making it act as a top-level element.  We also ignore the archive
 date portion of the path so users aren't having to guess at when a given file
 was archived.
 
 Running the indexer requires telling it your path strategy using special
-keywords "project", "date", and "ignore". The order doesn't matter, so long as
-you have exactly one project and date.  You can have any number of ignored
+keywords "category", "date", and "ignore". The order doesn't matter, so long as
+you have exactly one category and date.  You can have any number of ignored
 paths, or none at all.
 
 To explain through example, given the following:
@@ -138,13 +138,13 @@ To explain through example, given the following:
 - The inventory files are at `*/INVENTORY/*.csv`; e.g., from the dark archive
   root, you might have `foo/INVENTORY/archive.csv`
 - A file defined in that inventory is `2017-12-08/baz/srs/FILES/blah.tiff`
-- The path format (`ARCHIVE_PATH_FORMAT` in your settings file) is `ignore/date/ignore/project`
+- The path format (`ARCHIVE_PATH_FORMAT` in your settings file) is `ignore/date/ignore/category`
 
 Then the following are true:
 
 - The inventory file's full path is `/path/to/archive/foo/INVENTORY/archive.csv`
 - The file's full path is `/path/to/archive/foo/2017-12-08/bar/srs/FILES/blah.tiff`
 - The file's archive date is December 8th, 2017
-- The file lives under the project "srs"
+- The file lives under the category "srs"
 - The path elements "foo" and "bar" are ignored
-- The user, via the web discovery tool, would find this file under the "srs" project at `FILES/blah.tiff`
+- The user, via the web discovery tool, would find this file under the "srs" category at `FILES/blah.tiff`

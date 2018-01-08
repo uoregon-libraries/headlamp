@@ -19,7 +19,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"AddToQueueButton":           addToQueueButton,
 	"RemoveFromQueueButton":      removeFromQueueButton,
 	"ViewBulkQueuePath":          viewBulkQueuePath,
-	"BrowseProjectPath":          browseProjectPath,
+	"BrowseCategoryPath":         browseCategoryPath,
 	"BrowseFolderPath":           browseFolderPath,
 	"BrowseContainingFolderPath": browseContainingFolderPath,
 	"ViewFilePath":               viewFilePath,
@@ -27,7 +27,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"BulkDownloadCreatePath":     bulkDownloadCreatePath,
 	"Pathify":                    pathify,
 	"GenericPath":                joinPaths,
-	"stripProjectFolder":         stripProjectFolder,
+	"stripCategoryFolder":        stripCategoryFolder,
 	"humanFilesize":              humanFilesize,
 }
 
@@ -44,13 +44,13 @@ func joinPaths(parts ...string) string {
 	return path.Join(parts...)
 }
 
-func searchPath(project *db.Project, folder *db.Folder) string {
-	// We only handle "search/" and beyond, so if there's no project context, we
+func searchPath(category *db.Category, folder *db.Folder) string {
+	// We only handle "search/" and beyond, so if there's no category context, we
 	// have to force the trailing slash
-	if project == nil {
+	if category == nil {
 		return joinPaths("search") + "/"
 	}
-	return joinPaths("search", pathify(project, folder))
+	return joinPaths("search", pathify(category, folder))
 }
 
 func addToQueuePath(file *db.File) string {
@@ -108,17 +108,17 @@ func viewBulkQueuePath() string {
 	return joinPaths("bulk-download")
 }
 
-// browseProjectPath produces the URL to browse the given project's top-level folder
-func browseProjectPath(project *db.Project) string {
-	return joinPaths("browse", project.Name)
+// browseCategoryPath produces the URL to browse the given category's top-level folder
+func browseCategoryPath(category *db.Category) string {
+	return joinPaths("browse", category.Name)
 }
 
 func browseFolderPath(folder *db.Folder) string {
-	return joinPaths("browse", pathify(folder.Project, folder))
+	return joinPaths("browse", pathify(folder.Category, folder))
 }
 
 func browseContainingFolderPath(file *db.File) string {
-	return joinPaths("browse", file.Project.Name, sanitizePath(file.ContainingFolder()))
+	return joinPaths("browse", file.Category.Name, sanitizePath(file.ContainingFolder()))
 }
 
 func viewFilePath(file *db.File) string {
@@ -133,9 +133,9 @@ func bulkDownloadCreatePath() string {
 	return joinPaths("bulk", "create")
 }
 
-// stripProjectFolder takes a string representing a path, and strips out the
+// stripCategoryFolder takes a string representing a path, and strips out the
 // current folder context, if any exists
-func stripProjectFolder(f *db.Folder, path string) string {
+func stripCategoryFolder(f *db.Folder, path string) string {
 	path = sanitizePath(path)
 	if f == nil {
 		return path
@@ -148,14 +148,14 @@ func stripProjectFolder(f *db.Folder, path string) string {
 	return path
 }
 
-// pathify combines the project and folder to create a slash-delimited string
-func pathify(project *db.Project, folder *db.Folder) string {
+// pathify combines the category and folder to create a slash-delimited string
+func pathify(category *db.Category, folder *db.Folder) string {
 	var p string
 
-	if project == nil {
+	if category == nil {
 		return p
 	}
-	p = project.Name
+	p = category.Name
 	if folder != nil {
 		p = path.Join(p, sanitizePath(folder.PublicPath))
 	}

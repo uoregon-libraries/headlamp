@@ -49,19 +49,19 @@ func Read(filename string) (*Config, error) {
 
 func (c *Config) parsePathFormat() error {
 	var formatParts = strings.Split(c.PathFormatString, string(os.PathSeparator))
-	var hasProject bool
+	var hasCategory bool
 	var hasDate bool
 	for _, part := range formatParts {
 		switch part {
 		case "ignore":
 			c.PathFormat = append(c.PathFormat, Ignored)
 
-		case "project":
-			if hasProject {
-				return fmt.Errorf(`"project" must be specified exactly once`)
+		case "category":
+			if hasCategory {
+				return fmt.Errorf(`"category" must be specified exactly once`)
 			}
-			hasProject = true
-			c.PathFormat = append(c.PathFormat, Project)
+			hasCategory = true
+			c.PathFormat = append(c.PathFormat, Category)
 
 		case "date":
 			if hasDate {
@@ -74,8 +74,8 @@ func (c *Config) parsePathFormat() error {
 			return fmt.Errorf("unknown keyword %q", part)
 		}
 	}
-	if !hasProject {
-		return fmt.Errorf(`"project" must be specified exactly once`)
+	if !hasCategory {
+		return fmt.Errorf(`"category" must be specified exactly once`)
 	}
 	if !hasDate {
 		return fmt.Errorf(`"date" must be specified exactly once`)

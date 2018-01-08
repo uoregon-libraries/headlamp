@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-// Project maps to the projects database table, which represents a "magic"
+// Category maps to the categories database table, which represents a "magic"
 // dark-archive directory we expose as if it's a top-level directory for
 // browsing files
-type Project struct {
+type Category struct {
 	ID   int `sql:",primary"`
 	Name string
 }
@@ -23,13 +23,13 @@ type Inventory struct {
 }
 
 // Folder maps to the folders table, and is effectively a giant list of our
-// collapsed folder structure for a project to allow easier browsing and/or
+// collapsed folder structure for a category to allow easier browsing and/or
 // refining of searches
 type Folder struct {
-	ID         int      `sql:",primary"`
-	Project    *Project `sql:"-"`
-	Folder     *Folder  `sql:"-"`
-	ProjectID  int
+	ID         int       `sql:",primary"`
+	Category   *Category `sql:"-"`
+	Folder     *Folder   `sql:"-"`
+	CategoryID int
 	FolderID   int
 	Depth      int
 	Name       string
@@ -40,10 +40,10 @@ type Folder struct {
 // files described by the inventory files
 type File struct {
 	ID          uint64     `sql:",primary"`
-	Project     *Project   `sql:"-"`
+	Category    *Category  `sql:"-"`
 	Inventory   *Inventory `sql:"-"`
 	Folder      *Folder    `sql:"-"`
-	ProjectID   int
+	CategoryID  int
 	InventoryID int
 	FolderID    int
 	Depth       int

@@ -37,20 +37,20 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderHome(w http.ResponseWriter, r *http.Request) {
-	var projects, err = dbh.Operation().AllProjects()
+	var categories, err = dbh.Operation().AllCategories()
 	if err != nil {
-		logger.Errorf("Unable to find projects: %s", err)
-		_500(w, r, "Error trying to find project list.  Try again or contact support.")
+		logger.Errorf("Unable to find categories: %s", err)
+		_500(w, r, "Error trying to find category list.  Try again or contact support.")
 		return
 	}
 
-	home.Render(w, r, vars{"Title": "Headlamp", "Projects": projects})
+	home.Render(w, r, vars{"Title": "Headlamp", "Categories": categories})
 }
 
 type browseSearchData struct {
 	op         *db.Operation
 	pName      string
-	project    *db.Project
+	category   *db.Category
 	folderPath string
 	folder     *db.Folder
 	hadError   bool
@@ -59,7 +59,7 @@ type browseSearchData struct {
 // getBrowseSearchData centralizes some of the common things we need to check /
 // pull from the database for both browsing and searching:
 //
-// - Get the current project, if this isn't a top-level search
+// - Get the current category, if this isn't a top-level search
 // - Get the current folder, if one is set
 func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchData {
 	var bsd browseSearchData
@@ -77,27 +77,27 @@ func getBrowseSearchData(w http.ResponseWriter, r *http.Request) browseSearchDat
 	bsd.folderPath = filepath.Join(parts[2:]...)
 
 	// This is acceptable in some situations, so we don't want to explode due to
-	// missing project
+	// missing category
 	if bsd.pName == "" {
 		return bsd
 	}
 
 	var err error
-	bsd.project, err = bsd.op.FindProjectByName(bsd.pName)
+	bsd.category, err = bsd.op.FindCategoryByName(bsd.pName)
 	if err != nil {
-		logger.Errorf("Error trying to read project %q from the database: %s", bsd.pName, err)
-		_500(w, r, fmt.Sprintf("Error trying to find project %q.  Try again or contact support.", bsd.pName))
+		logger.Errorf("Error trying to read category %q from the database: %s", bsd.pName, err)
+		_500(w, r, fmt.Sprintf("Error trying to find category %q.  Try again or contact support.", bsd.pName))
 		return bsde
 	}
-	if bsd.project == nil {
-		_404(w, r, fmt.Sprintf("Project %q not found", bsd.pName))
+	if bsd.category == nil {
+		_404(w, r, fmt.Sprintf("Category %q not found", bsd.pName))
 		return bsde
 	}
 
 	if bsd.folderPath != "" {
-		bsd.folder, err = bsd.op.FindFolderByPath(bsd.project, bsd.folderPath)
+		bsd.folder, err = bsd.op.FindFolderByPath(bsd.category, bsd.folderPath)
 		if err != nil {
-			logger.Errorf("Error trying to read folder %q (in project %q) from the database: %s",
+			logger.Errorf("Error trying to read folder %q (in category %q) from the database: %s",
 				bsd.folderPath, bsd.pName, err)
 			_500(w, r, fmt.Sprintf("Error trying to find folder %q.  Try again or contact support.", bsd.folderPath))
 			return bsde
@@ -117,9 +117,9 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var folders, err = bsd.op.GetFolders(bsd.project, bsd.folder)
+	var folders, err = bsd.op.GetFolders(bsd.category, bsd.folder)
 	if err != nil {
-		logger.Errorf("Error trying to read folders under %q (in project %q) from the database: %s",
+		logger.Errorf("Error trying to read folders under %q (in category %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
 		_500(w, r, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
 		return
@@ -127,9 +127,9 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 
 	var files []*db.File
 	var totalFileCount uint64
-	files, totalFileCount, err = bsd.op.GetFiles(bsd.project, bsd.folder, maxFiles+1)
+	files, totalFileCount, err = bsd.op.GetFiles(bsd.category, bsd.folder, maxFiles+1)
 	if err != nil {
-		logger.Errorf("Error trying to read files under %q (in project %q) from the database: %s",
+		logger.Errorf("Error trying to read files under %q (in category %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
 		_500(w, r, fmt.Sprintf("Error trying to read folder %q.  Try again or contact support.", bsd.folderPath))
 		return
@@ -142,8 +142,8 @@ func browseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	browse.Render(w, r, vars{
-		"Title":        fmt.Sprintf("Headlamp: Browsing %s", bsd.project.Name),
-		"Project":      bsd.project,
+		"Title":        fmt.Sprintf("Headlamp: Browsing %s", bsd.category.Name),
+		"Category":     bsd.category,
 		"Folder":       bsd.folder,
 		"Folders":      folders,
 		"Files":        files,
@@ -182,9 +182,9 @@ func searchHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, term string) {
-	var files, totalFileCount, err = bsd.op.SearchFiles(bsd.project, bsd.folder, term, maxFiles+1)
+	var files, totalFileCount, err = bsd.op.SearchFiles(bsd.category, bsd.folder, term, maxFiles+1)
 	if err != nil {
-		logger.Errorf("Error trying to search for files under %q (in project %q) from the database: %s",
+		logger.Errorf("Error trying to search for files under %q (in category %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
 		_500(w, r, "Error trying to search for folders.  Try again or contact support.")
 		return
@@ -199,7 +199,7 @@ func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, te
 	search.Render(w, r, vars{
 		"Title":        "Headlamp: File Search",
 		"SearchTerm":   term,
-		"Project":      bsd.project,
+		"Category":     bsd.category,
 		"Folder":       bsd.folder,
 		"Files":        files,
 		"TooManyFiles": tooManyFiles,
@@ -209,9 +209,9 @@ func fileSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, te
 }
 
 func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, term string) {
-	var folders, totalFolderCount, err = bsd.op.SearchFolders(bsd.project, bsd.folder, term, maxFiles+1)
+	var folders, totalFolderCount, err = bsd.op.SearchFolders(bsd.category, bsd.folder, term, maxFiles+1)
 	if err != nil {
-		logger.Errorf("Error trying to search for folders under %q (in project %q) from the database: %s",
+		logger.Errorf("Error trying to search for folders under %q (in category %q) from the database: %s",
 			bsd.folderPath, bsd.pName, err)
 		_500(w, r, "Error trying to search for folders.  Try again or contact support.")
 		return
@@ -226,7 +226,7 @@ func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, 
 	search.Render(w, r, vars{
 		"Title":            "Headlamp: Folder Search",
 		"FolderSearchTerm": term,
-		"Project":          bsd.project,
+		"Category":         bsd.category,
 		"Folder":           bsd.folder,
 		"Folders":          folders,
 		"TooManyFolders":   tooManyFolders,

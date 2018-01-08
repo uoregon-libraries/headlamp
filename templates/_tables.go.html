@@ -1,14 +1,14 @@
 {{define "foldersTable"}}
 <table class="files table table-striped">
   <tr>
-    {{if not $.Project}}<th scope="col">Project</th>{{end}}
+    {{if not $.Category}}<th scope="col">Category</th>{{end}}
     <th scope="col">Name</th>
   </tr>
 
 {{range .Folders}}
   <tr>
-    {{if not $.Project}}<td><a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>{{end}}
-    <td><a href="{{BrowseFolderPath .}}">{{.PublicPath | stripProjectFolder $.Folder}}</a></td>
+    {{if not $.Category}}<td><a href="{{BrowseCategoryPath .Category}}">{{.Category.Name}}</a>{{end}}
+    <td><a href="{{BrowseFolderPath .}}">{{.PublicPath | stripCategoryFolder $.Folder}}</a></td>
   </tr>
 {{end}}
 </table>
@@ -17,7 +17,7 @@
 {{define "filesTable"}}
 <table class="files table table-striped">
   <tr>
-    {{if not $.Project}}<th scope="col">Project</th>{{end}}
+    {{if not $.Category}}<th scope="col">Category</th>{{end}}
     <th scope="col">Folder</th>
     <th scope="col">Archive Date</th>
     <th scope="col">Filename</th>
@@ -26,13 +26,13 @@
 
 {{range .Files}}
   <tr>
-    {{if not $.Project}}
+    {{if not $.Category}}
     <td>
-      <a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>
+      <a href="{{BrowseCategoryPath .Category}}">{{.Category.Name}}</a>
     </td>
     {{end}}
     <td>
-      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder | stripProjectFolder $.Folder}}</a>
+      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder | stripCategoryFolder $.Folder}}</a>
     </td>
     <td>
       {{.ArchiveDate}}
@@ -53,7 +53,7 @@
 {{define "bulkFilesTable"}}
 <table class="files table table-striped">
   <tr>
-    {{if not $.Project}}<th scope="col">Project</th>{{end}}
+    {{if not $.Category}}<th scope="col">Category</th>{{end}}
     <th scope="col">Folder</th>
     <th scope="col">Archive Date</th>
     <th scope="col">Filename</th>
@@ -62,13 +62,13 @@
 
 {{range .Files}}
   <tr>
-    {{if not $.Project}}
+    {{if not $.Category}}
     <td>
-      <a href="{{BrowseProjectPath .Project}}">{{.Project.Name}}</a>
+      <a href="{{BrowseCategoryPath .Category}}">{{.Category.Name}}</a>
     </td>
     {{end}}
     <td>
-      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder | stripProjectFolder $.Folder}}</a>
+      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder | stripCategoryFolder $.Folder}}</a>
     </td>
     <td>
       {{.ArchiveDate}}

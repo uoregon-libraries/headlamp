@@ -1,6 +1,6 @@
 {{block "content" .}}
 
-{{BreadCrumbs .Project .Folder}}
+{{BreadCrumbs .Category .Folder}}
 
 <h2>Search</h2>
 {{template "searchForm" .}}
@@ -13,8 +13,8 @@
   {{else}}
   Folders matching "{{.FolderSearchTerm}}"
   {{end}}
-  {{if .Project}}
-    under {{Pathify .Project .Folder}}
+  {{if .Category}}
+    under {{Pathify .Category .Folder}}
   {{end}}
 </p>
 

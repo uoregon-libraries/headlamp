@@ -20,23 +20,23 @@ APPROOT="/usr/local/headlamp"
 DARK_ARCHIVE_PATH="/mnt/darkarchive"
 
 # Archive path format: this should express the path using the keywords
-# "project", "date", and "ignore".  There must be exactly one occurrence of
-# "project", designating which path element specifies the project name.  There
+# "category", "date", and "ignore".  There must be exactly one occurrence of
+# "category", designating which path element specifies the category name.  There
 # must be one "date" as well, which tells us which folder represents the
 # archive date (in YYYY-MM-DD format).  There can be any number of "ignore"
 # elements in the path, each of which are simply ignored in order to form the
-# "public" path.  e.g., "project/ignore/date" would state that the top-level
-# folder is the project name and the next two folders are collapsed, while the
-# third is stored as the archive date.  "ignore/project/date" might be used for
-# "Volume/project/date" style archives.
-ARCHIVE_PATH_FORMAT="ignore/project/date"
+# "public" path.  e.g., "category/ignore/date" would state that the top-level
+# folder is the category name and the next two folders are collapsed, while the
+# third is stored as the archive date.  "ignore/category/date" might be used for
+# "Volume/category/date" style archives.
+ARCHIVE_PATH_FORMAT="ignore/category/date"
 
 # Inventory file glob: a pattern to find all the inventory files, such as
 # "*/*/INVENTORY/*.csv".  The files should be discoverable by taking the path
 # of the inventory file, removing the filename, adding "../" and the filename.
-# e.g., project/date/INVENTORY/foo.csv might describe "bar/baz.tiff", which
-# could be found at project/date/INVENTORY/../bar/baz.tiff, or
-# project/date/bar/baz.tiff.  Note that "manifest.csv" is automatically skipped
+# e.g., category/date/INVENTORY/foo.csv might describe "bar/baz.tiff", which
+# could be found at category/date/INVENTORY/../bar/baz.tiff, or
+# category/date/bar/baz.tiff.  Note that "manifest.csv" is automatically skipped
 # as those files are always our composite inventories.
 INVENTORY_FILE_GLOB="*/*/INVENTORY/*.csv"
 
