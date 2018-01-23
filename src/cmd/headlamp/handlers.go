@@ -234,3 +234,7 @@ func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, 
 		"TotalFolders":     totalFolderCount,
 	})
 }
+
+func viewRealFoldersHandler(w http.ResponseWriter, r *http.Request) {
+	_500(w, r, "Filesystem information not implemented yet")
+}

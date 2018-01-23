@@ -3,12 +3,14 @@
   <tr>
     {{if not $.Category}}<th scope="col">Category</th>{{end}}
     <th scope="col">Name</th>
+    <th scope="col">Info</th>
   </tr>
 
 {{range .Folders}}
   <tr>
     {{if not $.Category}}<td><a href="{{BrowseCategoryPath .Category}}">{{.Category.Name}}</a>{{end}}
     <td><a href="{{BrowseFolderPath .}}">{{.PublicPath | stripCategoryFolder $.Folder}}</a></td>
+    <td><a href="{{ViewRealFoldersPath .}}">Filesystem Information</a></td>
   </tr>
 {{end}}
 </table>
