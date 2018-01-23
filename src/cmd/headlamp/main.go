@@ -52,6 +52,7 @@ func startServer() *http.Server {
 	mux.HandleFunc(basePath+"/bulk/", bulkQueueHandler)
 	mux.HandleFunc(basePath+"/bulk/create", bulkCreateArchiveHandler)
 	mux.HandleFunc(basePath+"/bulk-download/", bulkDownloadHandler)
+	mux.HandleFunc(basePath+"/filesystem/", viewRealFoldersHandler)
 
 	var staticPath = filepath.Join(conf.Approot, "static")
 	var fileServer = http.FileServer(http.Dir(staticPath))

@@ -23,6 +23,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"BrowseFolderPath":           browseFolderPath,
 	"BrowseContainingFolderPath": browseContainingFolderPath,
 	"ViewFilePath":               viewFilePath,
+	"ViewRealFoldersPath":        viewRealFoldersPath,
 	"DownloadFilePath":           downloadFilePath,
 	"BulkDownloadCreatePath":     bulkDownloadCreatePath,
 	"Pathify":                    pathify,
@@ -123,6 +124,10 @@ func browseContainingFolderPath(file *db.File) string {
 
 func viewFilePath(file *db.File) string {
 	return joinPaths("view", strconv.FormatUint(file.ID, 10))
+}
+
+func viewRealFoldersPath(folder *db.Folder) string {
+	return joinPaths("filesystem", pathify(folder.Category, folder))
 }
 
 func downloadFilePath(file *db.File) string {

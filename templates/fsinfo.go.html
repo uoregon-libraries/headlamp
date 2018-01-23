@@ -1,0 +1,22 @@
+{{block "content" .}}
+
+{{BreadCrumbs .Category .Folder}}
+
+<p>
+  {{if gt (len .RealFolders) 1}}
+  The following paths on the filesystem collapse to
+  {{else}}
+  Only one path on the filesystem collapses to
+  {{end}}
+
+  <code>{{Pathify .Category .Folder}}</code>:
+</p>
+
+<ul>
+  {{range .RealFolders}}
+    <li><code>/{{.FullPath}}</code></li>
+  {{end}}
+</ul>
+
+{{end}}<!-- block "content" -->
+

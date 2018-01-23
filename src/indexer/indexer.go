@@ -2,14 +2,10 @@
 package indexer
 
 import (
-	"bytes"
 	"config"
 	"db"
-	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -25,7 +21,32 @@ import (
 type category struct {
 	*db.Category
 
-	folders map[string]*db.Folder
+	folders     map[string]*db.Folder
+	realFolders map[string]*db.RealFolder
+}
+
+func (c *category) buildFile(i *db.Inventory, f *db.Folder, r *fileRecord) *db.File {
+	var fid = 0
+	if f != nil {
+		fid = f.ID
+	}
+
+	var _, fname = filepath.Split(r.fullPath)
+	return &db.File{
+		Category:    c.Category,
+		CategoryID:  c.Category.ID,
+		Inventory:   i,
+		InventoryID: i.ID,
+		Folder:      f,
+		FolderID:    fid,
+		Depth:       strings.Count(r.publicPath, string(os.PathSeparator)),
+		ArchiveDate: r.archiveDate,
+		Checksum:    r.checksum,
+		Filesize:    r.filesize,
+		FullPath:    r.fullPath,
+		PublicPath:  r.publicPath,
+		Name:        fname,
+	}
 }
 
 // States an indexer can be in
@@ -55,14 +76,6 @@ type Indexer struct {
 	// background and waiting for it to finish while also being able to request
 	// it to stop at the next opportunity.
 	state int32
-}
-
-// indexerOperation wraps an Indexer with a single operation's context so we
-// can separate the overall Indexer setup / config from a single transactioned
-// indexing job
-type indexerOperation struct {
-	*Indexer
-	op *db.Operation
 }
 
 // New sets up a scanner for use in indexing dark-archive file data
@@ -177,138 +190,6 @@ func (i *Indexer) findInventoryFiles() ([]string, error) {
 	return files, nil
 }
 
-// findAlreadyIndexedInventoryFiles caches the list of inventory files already processed
-func (i *indexerOperation) findAlreadyIndexedInventoryFiles() error {
-	var allInventories, err = i.op.AllInventories()
-
-	i.Lock()
-	defer i.Unlock()
-	i.seenInventoryFiles = make(map[string]bool)
-	for _, inv := range allInventories {
-		// The database indexes everything relative to the dark archive so that the
-		// mount point doesn't have to be immutable.  Pretty great, right?  But
-		// that means we have to prepend the current root here....
-		i.seenInventoryFiles[filepath.Join(i.c.DARoot, inv.Path)] = true
-	}
-	return err
-}
-
 func (i *Indexer) seenInventoryFile(fname string) bool {
 	return i.seenInventoryFiles[fname]
-}
-
-type fileRecord struct {
-	checksum     string
-	filesize     int64
-	categoryName string
-	archiveDate  string
-	fullPath     string
-	publicPath   string
-}
-
-var emptyFR fileRecord
-
-// indexInventoryFile stores the given inventory file in the database and then
-// crawls through its contents to index the described archive files
-func (i *indexerOperation) indexInventoryFile(fname string) error {
-	var relativePath = strings.TrimLeft(strings.Replace(fname, i.c.DARoot, "", 1), "/")
-	logger.Debugf("Indexing inventory file %q as %q", fname, relativePath)
-
-	var data, err = ioutil.ReadFile(fname)
-	if err != nil {
-		return fmt.Errorf("unable to read inventory file %q: %s", fname, err)
-	}
-
-	var inventory = &db.Inventory{Path: relativePath}
-	i.op.WriteInventory(inventory)
-	var records = bytes.Split(data, []byte("\n"))
-	for index, record := range records {
-		var fr = i.parseFileRecord(relativePath, index, record)
-		if fr == emptyFR {
-			continue
-		}
-		i.storeFile(index, inventory, fr)
-	}
-
-	return i.op.Operation.Err()
-}
-
-// parseFileRecord gets the important pieces of the file record (from an
-// inventory file), performs some validation, and returns the data
-func (i *Indexer) parseFileRecord(inventoryFile string, index int, record []byte) fileRecord {
-	// These helpers make handling errors and warnings a bit easier
-	var logString = func(msg string, args ...interface{}) string {
-		var prefix = fmt.Sprintf("Invalid record (inventory %q, record #%d): ", inventoryFile, index)
-		return prefix + fmt.Sprintf(msg, args...)
-	}
-	var Errorf = func(msg string, args ...interface{}) fileRecord {
-		logger.Errorf(logString(msg, args...))
-		return emptyFR
-	}
-	var Warnf = func(msg string, args ...interface{}) { logger.Warnf(logString(msg, args...)) }
-
-	// Skip the blank record at the end
-	if len(record) == 0 {
-		return emptyFR
-	}
-
-	// We sometimes have filenames with commas, but the sha and filesize are
-	// always safe, so we just split to 3 elements
-	var recParts = bytes.SplitN(record, []byte(","), 3)
-
-	// Skip headers
-	if index == 0 && bytes.Equal(recParts[0], []byte("sha256sum")) {
-		return emptyFR
-	}
-
-	// We should always have exactly 3 fields
-	if len(recParts) != 3 {
-		return Errorf("there must be exactly 3 fields")
-	}
-
-	var filesize, err = strconv.ParseInt(string(recParts[1]), 10, 64)
-	if err != nil {
-		Warnf("invalid filesize value %q", recParts[1])
-	}
-
-	// The filename is relative to the inventory file's parent directory
-	var relPath = string(recParts[2])
-	var fullPath = filepath.Clean(filepath.Join(filepath.Dir(inventoryFile), "..", relPath))
-
-	// Split apart the path so we get the "magic" pieces separately from the rest
-	// of the path, which must reflect our "public" path
-	var partCount = len(i.c.PathFormat) + 1
-	var pathParts = strings.SplitN(fullPath, string(os.PathSeparator), partCount)
-	if len(pathParts) != partCount {
-		return Errorf("filename %q doesn't have enough parts for the format string %q", fullPath, i.c.PathFormat)
-	}
-	var publicPath string
-	pathParts, publicPath = pathParts[:partCount-1], pathParts[partCount-1]
-
-	// Pull the date and category name from the collapsed path elements
-	var categoryName, dateDir string
-	for index, part := range pathParts {
-		switch i.c.PathFormat[index] {
-		case config.Category:
-			categoryName = part
-		case config.Date:
-			dateDir = part
-		}
-	}
-
-	// Make sure the date matches our expected format
-	var timeFormat = "2006-01-02"
-	_, err = time.Parse(timeFormat, dateDir)
-	if err != nil {
-		return Errorf("archive date directory %q must be formatted as a date (YYYY-MM-DD)", dateDir)
-	}
-
-	var checksum = string(recParts[0])
-	return fileRecord{checksum: checksum,
-		filesize:     filesize,
-		categoryName: categoryName,
-		archiveDate:  dateDir,
-		fullPath:     fullPath,
-		publicPath:   publicPath,
-	}
 }
