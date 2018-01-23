@@ -14,7 +14,7 @@ type Template struct {
 	*tmpl.Template
 }
 
-var home, browse, search, bulk, empty *Template
+var home, browse, search, bulk, fsinfo, empty *Template
 
 func initTemplates(webroot string) {
 	webutil.Webroot = webroot
@@ -32,6 +32,7 @@ func initTemplates(webroot string) {
 	browse = t("browse")
 	search = t("search")
 	bulk = t("bulk")
+	fsinfo = t("fsinfo")
 	empty = &Template{root.Template()}
 }
 

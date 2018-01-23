@@ -381,3 +381,11 @@ func (op *Operation) ProcessArchiveJob(cb func(*ArchiveJob) bool) error {
 	op.ArchiveJobs.Save(j)
 	return op.Operation.Err()
 }
+
+// GetRealFolders returns real folders that can get to the given collapsed /
+// public folder
+func (op *Operation) GetRealFolders(f *Folder) ([]*RealFolder, error) {
+	var folders []*RealFolder
+	op.RealFolders.Select().Where("folder_id = ?", f.ID).AllObjects(&folders)
+	return folders, op.Operation.Err()
+}

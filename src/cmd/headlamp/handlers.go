@@ -236,5 +236,27 @@ func folderSearch(w http.ResponseWriter, r *http.Request, bsd browseSearchData, 
 }
 
 func viewRealFoldersHandler(w http.ResponseWriter, r *http.Request) {
-	_500(w, r, "Filesystem information not implemented yet")
+	var bsd = getBrowseSearchData(w, r)
+	if bsd.hadError {
+		return
+	}
+	if bsd.folder == nil {
+		_400(w, r, "Invalid filesystem request.  Try again or contact support.")
+		return
+	}
+
+	var realFolders, err = bsd.op.GetRealFolders(bsd.folder)
+	if err != nil {
+		logger.Errorf("Error trying to find filesystem data for %q: %s", bsd.folderPath, err)
+		_500(w, r, fmt.Sprintf("Error trying to find filesystem data for %q.  Try again or contact support.",
+			bsd.folderPath))
+		return
+	}
+
+	fsinfo.Render(w, r, vars{
+		"Title":       "Headlamp: Filesystem Information",
+		"Category":    bsd.category,
+		"Folder":      bsd.folder,
+		"RealFolders": realFolders,
+	})
 }
