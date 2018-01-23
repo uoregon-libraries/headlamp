@@ -36,6 +36,14 @@ type Folder struct {
 	PublicPath string
 }
 
+// A RealFolder lets us see what path(s) point to a given public folder
+type RealFolder struct {
+	ID       int     `sql:",primary"`
+	Folder   *Folder `sql:"-"`
+	FolderID int
+	FullPath string
+}
+
 // File maps to the files database table, which represents the actual archived
 // files described by the inventory files
 type File struct {

@@ -20,6 +20,7 @@ type Database struct {
 	dbh           *magicsql.DB
 	mtFiles       *magicsql.MagicTable
 	mtFolders     *magicsql.MagicTable
+	mtRealFolders *magicsql.MagicTable
 	mtCategories  *magicsql.MagicTable
 	mtInventories *magicsql.MagicTable
 	mtArchiveJobs *magicsql.MagicTable
@@ -31,6 +32,7 @@ type Operation struct {
 	Operation   *magicsql.Operation
 	Files       *magicsql.OperationTable
 	Folders     *magicsql.OperationTable
+	RealFolders *magicsql.OperationTable
 	Inventories *magicsql.OperationTable
 	Categories  *magicsql.OperationTable
 	ArchiveJobs *magicsql.OperationTable
@@ -47,6 +49,7 @@ func New() *Database {
 		dbh:           magicsql.Wrap(_db),
 		mtFiles:       magicsql.Table("files", &File{}),
 		mtFolders:     magicsql.Table("folders", &Folder{}),
+		mtRealFolders: magicsql.Table("real_folders", &RealFolder{}),
 		mtCategories:  magicsql.Table("categories", &Category{}),
 		mtInventories: magicsql.Table("inventories", &Inventory{}),
 		mtArchiveJobs: magicsql.Table("archive_jobs", &ArchiveJob{}),
@@ -60,6 +63,7 @@ func (db *Database) Operation() *Operation {
 		Operation:   magicOp,
 		Files:       magicOp.OperationTable(db.mtFiles),
 		Folders:     magicOp.OperationTable(db.mtFolders),
+		RealFolders: magicOp.OperationTable(db.mtRealFolders),
 		Inventories: magicOp.OperationTable(db.mtInventories),
 		Categories:  magicOp.OperationTable(db.mtCategories),
 		ArchiveJobs: magicOp.OperationTable(db.mtArchiveJobs),
@@ -171,6 +175,43 @@ func (op *Operation) FindOrCreateFolder(c *Category, f *Folder, path string) (*F
 		Name:       filename,
 	}
 	op.Folders.Save(&newFolder)
+	return &newFolder, op.Operation.Err()
+}
+
+// FindRealFolderByPath looks for a folder with the given path under the given category
+func (op *Operation) FindRealFolderByPath(parent *Folder, path string) (*RealFolder, error) {
+	var folder = &RealFolder{}
+	var ok = op.RealFolders.Select().Where("folder_id = ? AND full_path = ?", parent.ID, path).First(folder)
+	if !ok {
+		folder = nil
+	}
+	return folder, op.Operation.Err()
+}
+
+// FindOrCreateRealFolder centralizes the creation and DB-save operation for real_folders
+func (op *Operation) FindOrCreateRealFolder(parent *Folder, path string) (*RealFolder, error) {
+	var parentFolderID = 0
+	if parent != nil {
+		parentFolderID = parent.ID
+	}
+	var folder, err = op.FindRealFolderByPath(parent, path)
+	if err != nil {
+		return nil, err
+	}
+	if folder != nil {
+		if folder.FolderID != parentFolderID {
+			return nil, fmt.Errorf("existing record with different parent found")
+		}
+		folder.Folder = parent
+		return folder, nil
+	}
+
+	var newFolder = RealFolder{
+		Folder:   parent,
+		FolderID: parentFolderID,
+		FullPath: path,
+	}
+	op.RealFolders.Save(&newFolder)
 	return &newFolder, op.Operation.Err()
 }
 
