@@ -11,12 +11,9 @@ function clickCallback(btn) {
     btn.setAttribute("disabled", "disabled");
     var postLocation = btn.dataset["action"];
     fetch(postLocation, {method: "POST", credentials: "same-origin"}).then(function(response) {
-      console.log(response);
       if (response.status == 200) {
         var id = btn.dataset["toggleOnSuccess"];
-        console.log("ID is " + id);
         var el = document.getElementById(id);
-        console.log(el);
         el.removeAttribute("disabled");
       }
       else {
