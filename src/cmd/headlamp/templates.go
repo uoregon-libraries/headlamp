@@ -19,14 +19,19 @@ var home, browse, search, bulk, empty *Template
 func initTemplates(webroot string) {
 	webutil.Webroot = webroot
 	var root = tmpl.Root("layout", filepath.Join(conf.Approot, "templates"))
+
+	var t = func(name string) *Template {
+		return &Template{root.Clone().MustBuild(name + ".go.html")}
+	}
+
 	root.Funcs(tmpl.DefaultTemplateFunctions)
 	root.Funcs(webutil.FuncMap)
 	root.Funcs(localTemplateFuncs)
 	root.MustReadPartials("layout.go.html", "_search_form.go.html", "_tables.go.html")
-	home = &Template{root.Clone().MustBuild("home.go.html")}
-	browse = &Template{root.Clone().MustBuild("browse.go.html")}
-	search = &Template{root.Clone().MustBuild("search.go.html")}
-	bulk = &Template{root.Clone().MustBuild("bulk.go.html")}
+	home = t("home")
+	browse = t("browse")
+	search = t("search")
+	bulk = t("bulk")
 	empty = &Template{root.Template()}
 }
 
