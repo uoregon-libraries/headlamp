@@ -60,10 +60,11 @@
     <th scope="col">Archive Date</th>
     <th scope="col">Filename</th>
     <th scope="col">Filesize</th>
+    <th scope="col">Remove</th>
   </tr>
 
 {{range .Files}}
-  <tr>
+  <tr class="bulk-row">
     {{if not $.Category}}
     <td>
       <a href="{{BrowseCategoryPath .Category}}">{{.Category.Name}}</a>
@@ -81,6 +82,9 @@
     </td>
     <td>
       {{.Filesize | humanFilesize}}
+    </td>
+    <td>
+      {{RemoveFromQueueButton $.Queue .}}
     </td>
   </tr>
 {{end}}

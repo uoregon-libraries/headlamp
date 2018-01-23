@@ -89,6 +89,7 @@ func addToQueueButton(q *BulkFileQueue, file *db.File) template.HTML {
 	var classes = []string{"bulk-action", "btn", "btn-success"}
 	var attrs = map[string]string{
 		"id":                     bulkButtonID(true, file),
+		"data-is-remove":         "0",
 		"data-action":            addToQueuePath(file),
 		"data-toggle-on-success": bulkButtonID(false, file),
 	}
@@ -99,6 +100,7 @@ func removeFromQueueButton(q *BulkFileQueue, file *db.File) template.HTML {
 	var classes = []string{"bulk-action", "btn", "btn-danger"}
 	var attrs = map[string]string{
 		"id":                     bulkButtonID(false, file),
+		"data-is-remove":         "1",
 		"data-action":            removeFromQueuePath(file),
 		"data-toggle-on-success": bulkButtonID(true, file),
 	}
