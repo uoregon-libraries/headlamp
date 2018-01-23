@@ -179,9 +179,9 @@ func (op *Operation) FindOrCreateFolder(c *Category, f *Folder, path string) (*F
 }
 
 // FindRealFolderByPath looks for a folder with the given path under the given category
-func (op *Operation) FindRealFolderByPath(parent *Folder, path string) (*RealFolder, error) {
+func (op *Operation) FindRealFolderByPath(f *Folder, path string) (*RealFolder, error) {
 	var folder = &RealFolder{}
-	var ok = op.RealFolders.Select().Where("folder_id = ? AND full_path = ?", parent.ID, path).First(folder)
+	var ok = op.RealFolders.Select().Where("folder_id = ? AND full_path = ?", f.ID, path).First(folder)
 	if !ok {
 		folder = nil
 	}
@@ -189,26 +189,26 @@ func (op *Operation) FindRealFolderByPath(parent *Folder, path string) (*RealFol
 }
 
 // FindOrCreateRealFolder centralizes the creation and DB-save operation for real_folders
-func (op *Operation) FindOrCreateRealFolder(parent *Folder, path string) (*RealFolder, error) {
-	var parentFolderID = 0
-	if parent != nil {
-		parentFolderID = parent.ID
+func (op *Operation) FindOrCreateRealFolder(f *Folder, path string) (*RealFolder, error) {
+	var fid = 0
+	if f != nil {
+		fid = f.ID
 	}
-	var folder, err = op.FindRealFolderByPath(parent, path)
+	var folder, err = op.FindRealFolderByPath(f, path)
 	if err != nil {
 		return nil, err
 	}
 	if folder != nil {
-		if folder.FolderID != parentFolderID {
-			return nil, fmt.Errorf("existing record with different parent found")
+		if folder.FolderID != fid {
+			return nil, fmt.Errorf("existing record with different folder found")
 		}
-		folder.Folder = parent
+		folder.Folder = f
 		return folder, nil
 	}
 
 	var newFolder = RealFolder{
-		Folder:   parent,
-		FolderID: parentFolderID,
+		Folder:   f,
+		FolderID: fid,
 		FullPath: path,
 	}
 	op.RealFolders.Save(&newFolder)
