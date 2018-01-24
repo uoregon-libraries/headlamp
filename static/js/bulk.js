@@ -20,18 +20,18 @@ function clickCallback(btn) {
     btn.setAttribute("disabled", "disabled");
     var postLocation = btn.dataset["action"];
     fetch(postLocation, {method: "POST", credentials: "same-origin"}).then(function(response) {
-      if (response.status == 200) {
-        var id = btn.dataset["toggleOnSuccess"];
-        var el = document.getElementById(id);
-        // On the bulk downloads page, we don't have a "Queue" button, so we
-        // have to check for null elements
-        if (el != null) {
-          el.removeAttribute("disabled");
-        }
-      }
-      else {
+      if (response.status != 200) {
         btn.removeAttribute("disabled");
         alert("Error!  Please try again or contact support.");
+        return;
+      }
+
+      var id = btn.dataset["toggleOnSuccess"];
+      var el = document.getElementById(id);
+      // On the bulk downloads page, we don't have a "Queue" button, so we
+      // have to check for null elements
+      if (el != null) {
+        el.removeAttribute("disabled");
       }
     });
   };
