@@ -34,6 +34,14 @@ function clickCallback(btn) {
           row.remove();
         }
       }
+      return response.text();
+    }).then(function(responseBody) {
+      if (responseBody != null) {
+        var queueInfo = document.getElementById("queue-info")
+        if (queueInfo != null) {
+          queueInfo.innerHTML = responseBody;
+        }
+      }
     });
   };
 }
