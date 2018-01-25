@@ -68,7 +68,16 @@ func bulkQueueHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	var qp *QueuePresenter
+	qp, err = NewQueuePresenter(q)
+	if err != nil {
+		logger.Errorf("Unable to reload user's bulk file queue after modification: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(qp.Status()))
 }
 
 func bulkDownloadHandler(w http.ResponseWriter, r *http.Request) {
