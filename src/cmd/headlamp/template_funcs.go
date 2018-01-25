@@ -8,6 +8,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"version"
 
 	"github.com/uoregon-libraries/gopkg/humanize"
 	"github.com/uoregon-libraries/gopkg/tmpl"
@@ -30,6 +31,7 @@ var localTemplateFuncs = tmpl.FuncMap{
 	"GenericPath":                joinPaths,
 	"stripCategoryFolder":        stripCategoryFolder,
 	"humanFilesize":              humanFilesize,
+	"VersionString":              versionString,
 }
 
 // sanitizePath takes a path from a file or folder and makes it
@@ -173,4 +175,10 @@ func pathify(category *db.Category, folder *db.Folder) string {
 // humanFilesize returns a more meaningful value for filesizes
 func humanFilesize(bytes int64) string {
 	return humanize.Bytes(bytes)
+}
+
+// versionString returns a version number for inclusion on web pages so it's
+// clearer what's on staging vs. dev vs. prod, etc.
+func versionString() string {
+	return fmt.Sprintf("Headlamp v%s", version.Version)
 }
