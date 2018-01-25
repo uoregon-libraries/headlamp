@@ -2,7 +2,7 @@
 
 <h2>Bulk Download Queue</h2>
 
-{{if .Files}}
+{{if .Queue.Files}}
 <h3>Build Archive</h3>
 <p>
   You may request your current queue be built into an archive.  Depending on
@@ -20,16 +20,16 @@
 </form>
 
 <h3>Current Queue</h3>
-<p>
-  Your current queue consists of {{len .Files}} files totaling {{.TotalFilesize | humanFilesize}}.
+<p aria-live="polite" id="queue-info">
+  {{.Queue.Status}}
 </p>
 
-{{template "bulkFilesTable" .}}
+{{template "bulkFilesTable" .Queue}}
 
-{{else}} <!-- if .Files -->
+{{else}} <!-- if .Queue.Files -->
 <p>Your current queue is empty!  Browse and/or search to queue up files for bulk download.</p>
 
-{{end}} <!-- if .Files -->
+{{end}} <!-- if .Queue.Files -->
 
 {{end}}<!-- block "content" -->
 

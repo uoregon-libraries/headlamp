@@ -68,7 +68,16 @@ func bulkQueueHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	var qp *QueuePresenter
+	qp, err = NewQueuePresenter(q)
+	if err != nil {
+		logger.Errorf("Unable to reload user's bulk file queue after modification: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(qp.Status()))
 }
 
 func bulkDownloadHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,24 +97,18 @@ func bulkDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	// bulk file queue
 	var emails, _ = s.GetString("emails")
 
-	var files []*db.File
-	files, err = q.Files()
+	var qp *QueuePresenter
+	qp, err = NewQueuePresenter(q)
 	if err != nil {
-		logger.Errorf("Unable to load files from the database: %s", err)
+		logger.Errorf("Unable to set up bulk file queue presenter: %s", err)
 		_500(w, r, "Unable to load your bulk download queue.  Try again or contact support.")
 		return
 	}
 
-	var totalFilesize int64
-	for _, f := range files {
-		totalFilesize += f.Filesize
-	}
-
 	bulk.Render(w, r, vars{
-		"Title":         "Headlamp: Bulk Download",
-		"Files":         files,
-		"TotalFilesize": totalFilesize,
-		"Emails":        emails,
+		"Title":  "Headlamp: Bulk Download",
+		"Queue":  qp,
+		"Emails": emails,
 	})
 }
 

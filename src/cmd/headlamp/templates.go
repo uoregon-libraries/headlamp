@@ -47,7 +47,9 @@ func (t *Template) Render(w http.ResponseWriter, r *http.Request, data vars) {
 	if err != nil {
 		logger.Errorf("Unable to load user's bulk file queue: %s", err)
 	}
-	data["Queue"] = q
+	if data["Queue"] == nil {
+		data["Queue"] = q
+	}
 
 	err = t.Execute(w, data)
 	if err != nil {

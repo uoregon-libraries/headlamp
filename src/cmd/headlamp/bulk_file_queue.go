@@ -1,6 +1,10 @@
 package main
 
-import "db"
+import (
+	"db"
+	"fmt"
+	"html/template"
+)
 
 // seenFile just gives us a zero-length value for the FileIDs map
 var seenFile struct{}
@@ -39,4 +43,33 @@ func (q *BulkFileQueue) Files() ([]*db.File, error) {
 		ids = append(ids, k)
 	}
 	return dbh.Operation().GetFilesByIDs(ids)
+}
+
+// QueuePresenter adds some pre-calculated data for more human-friendly output
+type QueuePresenter struct {
+	BulkFileQueue *BulkFileQueue
+	Files         []*db.File
+	TotalFilesize string
+}
+
+// NewQueuePresenter attempts to wrap a BulkFileQueue with presenter-specific data.
+// This can have errors if we aren't able to look up data in the database.
+func NewQueuePresenter(q *BulkFileQueue) (*QueuePresenter, error) {
+	var files, err = q.Files()
+	if err != nil {
+		return nil, fmt.Errorf("file lookup error: %s", err)
+	}
+
+	var totalFilesize int64
+	for _, f := range files {
+		totalFilesize += f.Filesize
+	}
+
+	return &QueuePresenter{BulkFileQueue: q, Files: files, TotalFilesize: humanFilesize(totalFilesize)}, nil
+}
+
+// Status returns the HTML for displaying the queue's status
+func (q *QueuePresenter) Status() template.HTML {
+	return template.HTML(fmt.Sprintf("Your current queue consists of %d files totaling %s.",
+		len(q.Files), q.TotalFilesize))
 }
