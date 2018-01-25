@@ -55,7 +55,7 @@
 {{define "bulkFilesTable"}}
 <table class="files table table-striped">
   <tr>
-    {{if not $.Category}}<th scope="col">Category</th>{{end}}
+    <th scope="col">Category</th>
     <th scope="col">Folder</th>
     <th scope="col">Archive Date</th>
     <th scope="col">Filename</th>
@@ -65,13 +65,11 @@
 
 {{range .Files}}
   <tr class="bulk-row">
-    {{if not $.Category}}
     <td>
       <a href="{{BrowseCategoryPath .Category}}">{{.Category.Name}}</a>
     </td>
-    {{end}}
     <td>
-      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder | stripCategoryFolder $.Folder}}</a>
+      <a href="{{BrowseContainingFolderPath .}}">{{.ContainingFolder}}</a>
     </td>
     <td>
       {{.ArchiveDate}}
@@ -84,7 +82,7 @@
       {{.Filesize | humanFilesize}}
     </td>
     <td>
-      {{RemoveFromQueueButton $.Queue .}}
+      {{RemoveFromQueueButton $.BulkFileQueue .}}
     </td>
   </tr>
 {{end}}
