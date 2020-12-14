@@ -1,7 +1,6 @@
 package main
 
 import (
-	"db"
 	"fmt"
 	"io"
 	"mime"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/uoregon-libraries/gopkg/fileutil"
 	"github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 // getFile returns an *os.File retrieved using the id in the last path element,

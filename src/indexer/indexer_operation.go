@@ -2,7 +2,6 @@ package indexer
 
 import (
 	"bytes"
-	"db"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 // indexerOperation wraps an Indexer with a single operation's context so we

@@ -1,10 +1,9 @@
 package main
 
 import (
-	"db"
-	"indexer"
-
 	"github.com/uoregon-libraries/gopkg/interrupts"
+	"github.com/uoregon-libraries/headlamp/src/db"
+	"github.com/uoregon-libraries/headlamp/src/indexer"
 )
 
 func main() {

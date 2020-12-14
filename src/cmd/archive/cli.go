@@ -1,13 +1,13 @@
 package main
 
 import (
-	"config"
 	"fmt"
 	"os"
 	"regexp"
 	"strings"
 
 	"github.com/uoregon-libraries/gopkg/wordutils"
+	"github.com/uoregon-libraries/headlamp/src/config"
 )
 
 var spaces = regexp.MustCompile(`\s+`)

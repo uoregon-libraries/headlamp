@@ -1,8 +1,9 @@
 package main
 
 import (
-	"db"
 	"time"
+
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 func main() {

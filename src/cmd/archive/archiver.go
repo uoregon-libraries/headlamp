@@ -2,8 +2,6 @@ package main
 
 import (
 	"archive/tar"
-	"config"
-	"db"
 	"fmt"
 	"io"
 	"net/smtp"
@@ -16,6 +14,8 @@ import (
 
 	"github.com/uoregon-libraries/gopkg/fileutil"
 	"github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/headlamp/src/config"
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 // Archiver holds the database handle and config to simplify processing

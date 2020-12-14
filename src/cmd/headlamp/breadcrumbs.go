@@ -1,12 +1,13 @@
 package main
 
 import (
-	"db"
 	"fmt"
 	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 type breadCrumb struct {

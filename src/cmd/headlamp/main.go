@@ -1,9 +1,7 @@
 package main
 
 import (
-	"config"
 	"context"
-	"db"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +13,8 @@ import (
 	"github.com/alexedwards/scs/stores/memstore"
 	"github.com/uoregon-libraries/gopkg/interrupts"
 	"github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/headlamp/src/config"
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 // dbh is our global database handle for DA searches

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"indexer"
 	"time"
 
 	"github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/headlamp/src/indexer"
 )
 
 type runner struct {

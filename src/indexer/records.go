@@ -2,13 +2,14 @@ package indexer
 
 import (
 	"bytes"
-	"config"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/uoregon-libraries/headlamp/src/config"
 )
 
 // inventoryRecord stores the raw data found on a single line of an inventory file

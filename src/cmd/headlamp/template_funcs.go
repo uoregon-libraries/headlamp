@@ -1,17 +1,17 @@
 package main
 
 import (
-	"db"
 	"fmt"
 	"html/template"
 	"os"
 	"path"
 	"strconv"
 	"strings"
-	"version"
 
 	"github.com/uoregon-libraries/gopkg/humanize"
 	"github.com/uoregon-libraries/gopkg/tmpl"
+	"github.com/uoregon-libraries/headlamp/src/db"
+	"github.com/uoregon-libraries/headlamp/src/version"
 )
 
 var localTemplateFuncs = tmpl.FuncMap{

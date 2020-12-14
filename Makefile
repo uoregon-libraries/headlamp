@@ -1,21 +1,20 @@
 .PHONY: all validate build lint format test clean
 
-all: vendor/src validate build
+all: validate build
 
 validate:
 	./validate.sh
 
 build:
-	gb build
-
-vendor/src:
-	gb vendor restore
+	go build -o bin/archive ./src/cmd/archive
+	go build -o bin/headlamp ./src/cmd/headlamp
+	go build -o bin/index ./src/cmd/index
 
 lint:
 	golint src/...
 
 format:
-	find src/ -name "*.go" | xargs gofmt -l -w -s
+	find src/ -name "*.go" | xargs goimports -l -w
 
 test:
 	go test ./src/...

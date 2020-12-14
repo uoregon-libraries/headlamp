@@ -1,9 +1,10 @@
 package main
 
 import (
-	"db"
 	"fmt"
 	"html/template"
+
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 // seenFile just gives us a zero-length value for the FileIDs map

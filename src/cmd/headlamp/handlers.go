@@ -1,13 +1,13 @@
 package main
 
 import (
-	"db"
 	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"github.com/uoregon-libraries/gopkg/logger"
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 // maxFiles tells the app how many files to display on at once; if there are

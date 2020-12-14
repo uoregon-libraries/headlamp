@@ -1,13 +1,13 @@
 package main
 
 import (
-	"db"
 	"net/http"
 	"net/mail"
 	"strconv"
 
 	"github.com/uoregon-libraries/gopkg/logger"
 	"github.com/uoregon-libraries/gopkg/webutil"
+	"github.com/uoregon-libraries/headlamp/src/db"
 )
 
 func bulkQueueHandler(w http.ResponseWriter, r *http.Request) {
